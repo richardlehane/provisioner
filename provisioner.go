@@ -1,0 +1,89 @@
+package main
+
+import (
+	"flag"
+	"io/ioutil"
+	"log"
+	"strings"
+	"time"
+
+	"github.com/packethost/packngo"
+)
+
+var (
+	pnamef = flag.String("project", "bench", "name of your packet project")
+	hnamef = flag.String("host", "test.server", "host name for your new server")
+	lifef  = flag.Duration("life", time.Hour, "duration before server is terminated")
+	maxf   = flag.Float64("max", 0.04, "maximum price per hour")
+	replf  = flag.String("replace", "", "comma-separated key-value pairs to replace ${KEY} strings in install")
+)
+
+func main() {
+	flag.Parse()
+	c, err := packngo.NewClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+	ps, _, err := c.Projects.List()
+	if err != nil {
+		log.Fatal(err)
+	}
+	var pid string
+	for _, p := range ps {
+		if *pnamef == p.Name {
+			pid = p.ID
+			break
+		}
+	}
+	if pid == "" {
+		log.Fatal("Can't find project name")
+	}
+	install := readInstall(flag.Arg(0))
+	dcr := provision(pid, install)
+	_, _, err = c.Devices.Create(dcr)
+	log.Print(err)
+}
+
+func readInstall(path string) string {
+	var install string
+	if path == "" {
+		return install
+	}
+	byt, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	install = string(byt)
+	install = strings.Replace(install, "\r\n", "\n", -1)
+	if *replf != "" {
+		vals := strings.Split(*replf, ",")
+		var odd bool
+		for i, v := range vals {
+			if odd {
+				odd = false
+				continue
+			}
+			vals[i] = "${" + v + "}"
+			odd = true
+		}
+		repl := strings.NewReplacer(vals...)
+		install = repl.Replace(install)
+	}
+	return install
+}
+
+func provision(pid, install string) *packngo.DeviceCreateRequest {
+	term := &packngo.Timestamp{Time: time.Now().Add(*lifef)}
+	return &packngo.DeviceCreateRequest{
+		Hostname:        *hnamef,
+		Facility:        "sjc1",
+		Plan:            "baremetal_0",
+		OS:              "ubuntu_18_04",
+		ProjectID:       pid,
+		UserData:        install,
+		BillingCycle:    "hourly",
+		SpotInstance:    true,
+		SpotPriceMax:    *maxf,
+		TerminationTime: term,
+	}
+}
