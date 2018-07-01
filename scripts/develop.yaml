@@ -47,5 +47,3 @@ runcmd:
   - [ systemctl, daemon-reload ]
   - [ systemctl, enable, runner.service ]
   - [ systemctl, start, --no-block, runner.service ]
-
-

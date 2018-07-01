@@ -4,6 +4,7 @@ import (
 	"flag"
 	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ var (
 	lifef  = flag.Duration("life", time.Hour, "duration before server is terminated")
 	maxf   = flag.Float64("max", 0.04, "maximum price per hour")
 	replf  = flag.String("replace", "", "comma-separated key-value pairs to replace ${KEY} strings in install")
+	envf   = flag.String("env", "", "comma-separated list of environment variables to replace ${KEY} strings in install")
 )
 
 func main() {
@@ -55,8 +57,18 @@ func readInstall(path string) string {
 	}
 	install = string(byt)
 	install = strings.Replace(install, "\r\n", "\n", -1)
-	if *replf != "" {
-		vals := strings.Split(*replf, ",")
+	if *replf != "" || *envf != "" {
+		var vals []string
+		if *replf != "" {
+			vals = strings.Split(*replf, ",")
+		}
+		if *envf != "" {
+			envs := strings.Split(*envf, ",")
+			for k := range envs {
+				v := os.Getenv(k)
+				vals = append(vals, k, v)
+			}
+		}
 		var odd bool
 		for i, v := range vals {
 			if odd {
