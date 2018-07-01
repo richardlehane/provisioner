@@ -20,6 +20,8 @@ var (
 	envf   = flag.String("env", "", "comma-separated list of environment variables to replace ${KEY} strings in install")
 )
 
+const stdPrice = 0.07
+
 func main() {
 	flag.Parse()
 	c, err := packngo.NewClient()
@@ -39,6 +41,17 @@ func main() {
 	}
 	if pid == "" {
 		log.Fatal("Can't find project name")
+	}
+	pri, _, err := c.SpotMarket.Prices()
+	if err != nil {
+		log.Fatal("Can't get prices")
+	}
+	spotp := pri["sjc1"]["baremetal_0"]
+	if spotp >= stdPrice {
+		if *maxf < stdPrice {
+			log.Fatalf("Can't get a server at that price, spot price is %v and max is %v\n", spotp, *maxf)
+		}
+		*maxf = 0
 	}
 	install := readInstall(flag.Arg(0))
 	dcr := provision(pid, install)
@@ -88,6 +101,10 @@ func readInstall(path string) string {
 }
 
 func provision(pid, install string) *packngo.DeviceCreateRequest {
+	var spoti bool
+	if *maxf > 0 {
+		spoti = true
+	}
 	term := &packngo.Timestamp{Time: time.Now().Add(*lifef)}
 	return &packngo.DeviceCreateRequest{
 		Hostname:        *hnamef,
@@ -97,7 +114,7 @@ func provision(pid, install string) *packngo.DeviceCreateRequest {
 		ProjectID:       pid,
 		UserData:        install,
 		BillingCycle:    "hourly",
-		SpotInstance:    true,
+		SpotInstance:    spoti,
 		SpotPriceMax:    *maxf,
 		TerminationTime: term,
 	}

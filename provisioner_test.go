@@ -26,10 +26,7 @@ func TestPrices(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	sjc1 := pri["sjc1"]
-	for k, v := range sjc1 {
-		t.Logf("Machine: %v, Price: %v\n", k, v)
-	}
+	t.Logf("baremetal_0 price: %v\n", pri["sjc1"]["baremetal_0"])
 }
 
 func TestOSes(t *testing.T) {
