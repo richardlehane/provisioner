@@ -64,7 +64,7 @@ func readInstall(path string) string {
 		}
 		if *envf != "" {
 			envs := strings.Split(*envf, ",")
-			for k := range envs {
+			for _, k := range envs {
 				v := os.Getenv(k)
 				vals = append(vals, k, v)
 			}
