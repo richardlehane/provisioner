@@ -1,0 +1,49 @@
+#cloud-config
+packages: 
+  - git
+  - unzip
+write_files:
+  - content: | 
+      [Unit]
+      Description=Runner: run arbitrary commands
+      After=default.target
+           
+      [Service]
+      Type=oneshot
+      User=root
+      Environment="RUNNER_AUTH=${RUNNER_AUTH}"
+      Environment="RUNNER_URL=https://www.itforarchivists.com/siegfried/jobs/develop"
+      Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/local/go/bin"
+      ExecStart=/usr/local/go/bin/runner
+           
+      [Install]
+      WantedBy=default.target
+    owner: root:root
+    permissions: '0644'
+    path: /etc/systemd/system/runner.service
+  - content: | 
+      [bb]
+      type = b2
+      account = ${BB_ACCOUNT}
+      key = ${BB_KEY}
+      endpoint = 
+    owner: root:root
+    permissions: '0644'
+    path: /root/.config/rclone/rclone.conf
+runcmd: 
+  - "curl https://rclone.org/install.sh | /bin/bash -s"
+  - "rclone config file"
+  - 'eval "$(curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | GIMME_GO_VERSION=stable bash)"'
+  - "mkdir /usr/local/go"
+  - "export GOPATH=/usr/local/go"
+  - "go get github.com/richardlehane/runner/cmd/runner"
+  - "go get github.com/richardlehane/siegfried/cmd/sf"
+  - "mkdir /root/siegfried"
+  - "cd $GOPATH/src/github.com/richardlehane/siegfried"
+  - "cp -R cmd/roy/data/. /root/siegfried"
+  - "git checkout develop"
+  - "go build -o $GOPATH/bin/sfdev github.com/richardlehane/siegfried/cmd/sf"
+  - "go build -o $GOPATH/bin/sfprof -tags profile github.com/richardlehane/siegfried/cmd/sf"
+  - [ systemctl, daemon-reload ]
+  - [ systemctl, enable, runner.service ]
+  - [ systemctl, start, --no-block, runner.service ]

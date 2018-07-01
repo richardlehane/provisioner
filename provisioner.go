@@ -15,7 +15,7 @@ var (
 	pnamef = flag.String("project", "bench", "name of your packet project")
 	hnamef = flag.String("host", "test.server", "host name for your new server")
 	lifef  = flag.Duration("life", time.Hour, "duration before server is terminated")
-	maxf   = flag.Float64("max", 0.04, "maximum price per hour")
+	maxf   = flag.Float64("max", 0.07, "maximum price per hour")
 	replf  = flag.String("replace", "", "comma-separated key-value pairs to replace ${KEY} strings in install")
 	envf   = flag.String("env", "", "comma-separated list of environment variables to replace ${KEY} strings in install")
 )
@@ -66,6 +66,9 @@ func readInstall(path string) string {
 			envs := strings.Split(*envf, ",")
 			for _, k := range envs {
 				v := os.Getenv(k)
+				if v == "" {
+					log.Fatalf("Can't find env key: %s", k)
+				}
 				vals = append(vals, k, v)
 			}
 		}
