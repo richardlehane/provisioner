@@ -1,0 +1,8 @@
+sudo: false
+language: go
+go:
+- stable
+install:
+- go install github.com/richardlehane/provisioner
+script:
+- go test -v github.com/richardlehane/provisioner
