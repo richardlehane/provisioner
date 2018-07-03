@@ -15,7 +15,7 @@ write_files:
       Environment="RUNNER_AUTH=${RUNNER_AUTH}"
       Environment="RUNNER_URL=https://www.itforarchivists.com/siegfried/jobs/develop"
       Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/local/go/bin"
-      ExecStart=/usr/local/go/bin/runner
+      ExecStart=/bin/bash -c 'source /.gimme/envs/latest.env; exec /usr/local/go/bin/runner'
            
       [Install]
       WantedBy=default.target
@@ -39,12 +39,14 @@ runcmd:
   - "export GOPATH=/usr/local/go"
   - "go get github.com/richardlehane/runner/cmd/runner"
   - "go get github.com/richardlehane/siegfried/cmd/sf"
+  - "go install github.com/richardlehane/siegfried/cmd/roy"
   - "mkdir /root/siegfried"
   - "cd $GOPATH/src/github.com/richardlehane/siegfried"
   - "cp -R cmd/roy/data/. /root/siegfried"
   - "git checkout develop"
   - "go build -o $GOPATH/bin/sfdev github.com/richardlehane/siegfried/cmd/sf"
   - "go build -o $GOPATH/bin/sfprof -tags profile github.com/richardlehane/siegfried/cmd/sf"
+  - "ln -s $(which go) /usr/local/bin/go"
   - [ systemctl, daemon-reload ]
   - [ systemctl, enable, runner.service ]
   - [ systemctl, start, --no-block, runner.service ]

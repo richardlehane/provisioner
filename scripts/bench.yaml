@@ -38,6 +38,7 @@ runcmd:
   - "export GOPATH=/usr/local/go"
   - "go get github.com/richardlehane/runner/cmd/runner"
   - "go get github.com/richardlehane/siegfried/cmd/sf"
+  - "go install github.com/richardlehane/siegfried/cmd/roy"
   - "mkdir /root/siegfried"
   - "cd $GOPATH/src/github.com/richardlehane/siegfried"
   - "cp -R cmd/roy/data/. /root/siegfried"
