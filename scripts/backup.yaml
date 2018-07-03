@@ -1,0 +1,39 @@
+#cloud-config
+packages: 
+  - unzip
+write_files:
+  - content: | 
+      [Unit]
+      Description=Backup gdrive to backblaze
+      After=default.target
+           
+      [Service]
+      Type=oneshot
+      User=root
+      ExecStart=/usr/bin/rclone sync asa: bb:asabackup --drive-impersonate ${DRIVE_USER} --tranfers 32 --backup-dir bb:asadeleted
+           
+      [Install]
+      WantedBy=default.target
+    owner: root:root
+    permissions: '0644'
+    path: /etc/systemd/system/rclone.service
+  - content: | 
+      [bb]
+      type = b2
+      account = ${BB_ACCOUNT}
+      key = ${BB_KEY}
+      endpoint = 
+
+      [asa]
+      type = drive
+      scope = drive.readonly
+      service_account_credentials = ${service.json}
+    owner: root:root
+    permissions: '0644'
+    path: /root/.config/rclone/rclone.conf
+runcmd: 
+  - "curl https://rclone.org/install.sh | /bin/bash -s"
+  - "rclone config file"
+  - [ systemctl, daemon-reload ]
+  - [ systemctl, enable, rclone.service ]
+  - [ systemctl, start, --no-block, rclone.service ]

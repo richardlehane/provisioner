@@ -18,6 +18,7 @@ var (
 	maxf   = flag.Float64("max", 0.07, "maximum price per hour")
 	replf  = flag.String("replace", "", "comma-separated key-value pairs to replace ${KEY} strings in install")
 	envf   = flag.String("env", "", "comma-separated list of environment variables to replace ${KEY} strings in install")
+	filesf = flag.String("files", "", "comma-separated list of file names to replace ${KEY} strings in install")
 )
 
 func main() {
@@ -70,6 +71,16 @@ func readInstall(path string) string {
 					log.Fatalf("Can't find env key: %s", k)
 				}
 				vals = append(vals, k, v)
+			}
+		}
+		if *filesf != "" {
+			files := strings.Split(*filesf, ",")
+			for _, k := range files {
+				byt, err := ioutil.ReadFile(k)
+				if err != nil {
+					log.Fatalf("Can't open file: %s", k)
+				}
+				vals = append(vals, k, string(byt))
 			}
 		}
 		var odd bool
