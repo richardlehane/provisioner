@@ -2,6 +2,7 @@
 packages: 
   - git
   - unzip
+  - graphviz
 write_files:
   - content: | 
       [Unit]
