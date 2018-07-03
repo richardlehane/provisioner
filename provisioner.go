@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -80,6 +81,7 @@ func readInstall(path string) string {
 				if err != nil {
 					log.Fatalf("Can't open file: %s", k)
 				}
+				k = filepath.Base(k)
 				vals = append(vals, k, string(byt))
 			}
 		}
