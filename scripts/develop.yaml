@@ -15,7 +15,7 @@ write_files:
       Environment="RUNNER_AUTH=${RUNNER_AUTH}"
       Environment="RUNNER_URL=https://www.itforarchivists.com/siegfried/jobs/develop"
       Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/local/go/bin"
-      ExecStart=/bin/bash -c 'source /.gimme/envs/latest.env; exec /usr/local/go/bin/runner'
+      ExecStart=/usr/local/go/bin/runner
            
       [Install]
       WantedBy=default.target
