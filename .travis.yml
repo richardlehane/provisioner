@@ -10,10 +10,11 @@ env:
   - secure: TrbS3S102I4nfehVc/Y6GqNKCD+E1JeVCPCjQoNRNkNvfpCojCclfrMjLmSkhO1xgMCVV+vKe3OIFKFDonzUhTqL75ctpRUegGQObtg6R49DxJf3C12+oJi76L79mM9h1OXtau/BGgm25pB/ZmhgHI3rNAK9XITPRuXb3HOAFioC8qCU204EbnxOCX+H95k/UWZlnsyWVmp7Wgy2g+OGbuJvS8VBuvmUu+DIqNEjRONSytKQXPbXXRe0LUaT25hLi0KCOEMSI6o/+TCS5oIqmyVE8xcy27Z23rmng9hwfm6zMA1saWaX5sGCj0UEZpsVYkSaOv91ay+fR6jHQfCu8Q0Koc24gJwhm/JqseNczDjignoBbhspgOWrm+9vQwIT7rxY4vy7mTLpESvqifnk0RLHdHq2ZV2NMGqdHlX3kaerwh3bCH92zHLPUM81bzcASQOv9USQTh0dK5d1KLDaYXP/Xgj5aFka/VU3F+JZcw3i7ybX9zbtCCI6RvU/8lxdMz5CnwFoHK2lx2l+7MAvqA5xKxraxGNzne2tzmGj9OBa95CmXaSLPNXBuQqdNy8KTBbyCXIAnOYA1uY2z3SlK+5zB/d5Iyl8XmXbMBKWbmJI76XRqSNq/cTnzzbJRqwg7TJuL+pzbsgb1QNW4mzq6ESoMr4Og5/iWFcaFGSUDo4=
 install:
 - go get github.com/packethost/packngo
+- go get github.com/richardlehane/crock32
 - go install github.com/richardlehane/provisioner
 script:
 - go test -v github.com/richardlehane/provisioner
-- provisioner -host=backup.archivists.org -env=BB_ACCOUNT,BB_KEY,DRIVE_USER -files
+- provisioner -host=backup-${RAND}.archivists.org -env=BB_ACCOUNT,BB_KEY,DRIVE_USER -files
   $HOME/gopath/src/github.com/richardlehane/provisioner/service.json $HOME/gopath/src/github.com/richardlehane/provisioner/scripts/backup.yaml
 before_install:
 - openssl aes-256-cbc -K $encrypted_a2ef06f48f37_key -iv $encrypted_a2ef06f48f37_iv
