@@ -45,7 +45,7 @@ func main() {
 	}
 	install := readInstall(flag.Arg(0))
 	dcr := provision(pid, install)
-	log.Printf("PUID: %s\n", crock32.UUID())
+	log.Printf("PUID: %s\n", crock32.PUID())
 	log.Println(dcr.Hostname)
 	_, _, err = c.Devices.Create(dcr)
 	log.Print(err)
