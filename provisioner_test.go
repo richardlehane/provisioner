@@ -41,12 +41,6 @@ func TestOSes(t *testing.T) {
 }
 
 func TestInstall(t *testing.T) {
-
 	inst := readInstall("scripts/bench.yaml")
 	t.Log(inst)
-}
-
-func TestProvision(t *testing.T) {
-	*hnamef = "develop-${RAND}.itforarchivists.com"
-	t.Log(provision("", ""))
 }
