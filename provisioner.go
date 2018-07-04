@@ -60,7 +60,7 @@ func readInstall(path string) string {
 	}
 	install = string(byt)
 	install = strings.Replace(install, "\r\n", "\n", -1)
-	if *replf != "" || *envf != "" {
+	if *replf != "" || *envf != "" || *filesf != "" {
 		var vals []string
 		if *replf != "" {
 			vals = strings.Split(*replf, ",")
