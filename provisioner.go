@@ -104,7 +104,7 @@ func readInstall(path string) string {
 func provision(pid, install string) *packngo.DeviceCreateRequest {
 	term := &packngo.Timestamp{Time: time.Now().Add(*lifef)}
 	return &packngo.DeviceCreateRequest{
-		Hostname:        strings.Replace(*hnamef, "${RAND}", crock32.PUID()),
+		Hostname:        strings.Replace(*hnamef, "${RAND}", crock32.PUID(), -1),
 		Facility:        "sjc1",
 		Plan:            "baremetal_0",
 		OS:              "ubuntu_18_04",
