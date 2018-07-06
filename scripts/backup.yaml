@@ -10,7 +10,7 @@ write_files:
       [Service]
       Type=oneshot
       User=root
-      ExecStart=/usr/bin/rclone sync asa: bb:asabackup --drive-impersonate ${DRIVE_USER} --transfers 32
+      ExecStart=/usr/bin/rclone sync asa: bb:asabackup --fast-list --drive-impersonate ${DRIVE_USER} --transfers 32
       [Install]
       WantedBy=default.target
     owner: root:root
