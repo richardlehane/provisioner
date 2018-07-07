@@ -14,14 +14,18 @@ import (
 )
 
 var (
+	delf   = flag.Bool("delete", false, "delete server with host name -host")
 	pnamef = flag.String("project", "bench", "name of your packet project")
 	hnamef = flag.String("host", "test.server", "host name for your new server")
 	lifef  = flag.Duration("life", time.Hour, "duration before server is terminated")
 	maxf   = flag.Float64("max", 0.07, "maximum price per hour")
+	spotty = flag.Bool("spotty", false, "false spot pricing regardless of spot price")
 	replf  = flag.String("replace", "", "comma-separated key-value pairs to replace ${KEY} strings in install")
 	envf   = flag.String("env", "", "comma-separated list of environment variables to replace ${KEY} strings in install")
 	filesf = flag.String("files", "", "comma-separated list of file names to replace ${KEY} strings in install")
 )
+
+const stdPrice = 0.07
 
 func main() {
 	flag.Parse()
@@ -41,15 +45,46 @@ func main() {
 		}
 	}
 	if pid == "" {
-		log.Fatal("Can't find project name")
+		log.Fatalf("Can't find project name %s\n", *pnamef)
 	}
-	install := readInstall(flag.Arg(0))
-	dcr := provision(pid, install)
+	// if we're deleting...
+	if *delf {
+		devices, _, err := c.Devices.List(pid, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var did string
+		for _, d := range devices {
+			if d.Hostname == *hnamef {
+				did = d.ID
+				break
+			}
+		}
+		if did == "" {
+			log.Fatalf("Can't find hostname %s in project %s\n", *hnamef, *pnamef)
+		}
+		_, err = c.Devices.Delete(did)
+		log.Print(err)
+		return
+	}
+	host := strings.Replace(*hnamef, "RAND", crock32.PUID(), -1)
+	install := readInstall(flag.Arg(0), host)
+	// now price arbitrage
+	spot := true
+	pri, _, err := c.SpotMarket.Prices()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if pri["sjc1"]["baremetal_0"] >= stdPrice && !*spotty {
+		spot = false
+		*maxf = 0
+	}
+	dcr := provision(pid, host, install, spot)
 	_, _, err = c.Devices.Create(dcr)
 	log.Print(err)
 }
 
-func readInstall(path string) string {
+func readInstall(path, host string) string {
 	var install string
 	if path == "" {
 		return install
@@ -60,6 +95,7 @@ func readInstall(path string) string {
 	}
 	install = string(byt)
 	install = strings.Replace(install, "\r\n", "\n", -1)
+	install = strings.Replace(install, "${HOST}", host, -1)
 	if *replf != "" || *envf != "" || *filesf != "" {
 		var vals []string
 		if *replf != "" {
@@ -101,17 +137,17 @@ func readInstall(path string) string {
 	return install
 }
 
-func provision(pid, install string) *packngo.DeviceCreateRequest {
+func provision(pid, host, install string, spot bool) *packngo.DeviceCreateRequest {
 	term := &packngo.Timestamp{Time: time.Now().Add(*lifef)}
 	return &packngo.DeviceCreateRequest{
-		Hostname:        strings.Replace(*hnamef, "RAND", crock32.PUID(), -1),
+		Hostname:        host,
 		Facility:        "sjc1",
 		Plan:            "baremetal_0",
 		OS:              "ubuntu_18_04",
 		ProjectID:       pid,
 		UserData:        install,
 		BillingCycle:    "hourly",
-		SpotInstance:    true,
+		SpotInstance:    spot,
 		SpotPriceMax:    *maxf,
 		TerminationTime: term,
 	}

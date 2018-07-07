@@ -41,6 +41,6 @@ func TestOSes(t *testing.T) {
 }
 
 func TestInstall(t *testing.T) {
-	inst := readInstall("scripts/bench.yaml")
+	inst := readInstall("scripts/bench.yaml", "")
 	t.Log(inst)
 }
