@@ -13,19 +13,18 @@ import (
 	"github.com/richardlehane/crock32"
 )
 
+const stdPrice = 0.07
+
 var (
 	delf   = flag.Bool("delete", false, "delete server with host name -host")
 	pnamef = flag.String("project", "bench", "name of your packet project")
 	hnamef = flag.String("host", "test.server", "host name for your new server")
 	lifef  = flag.Duration("life", time.Hour, "duration before server is terminated")
-	maxf   = flag.Float64("max", 0.07, "maximum price per hour")
-	spotty = flag.Bool("spotty", false, "false spot pricing regardless of spot price")
+	maxf   = flag.Float64("max", stdPrice, "maximum price per hour")
 	replf  = flag.String("replace", "", "comma-separated key-value pairs to replace ${KEY} strings in install")
 	envf   = flag.String("env", "", "comma-separated list of environment variables to replace ${KEY} strings in install")
 	filesf = flag.String("files", "", "comma-separated list of file names to replace ${KEY} strings in install")
 )
-
-const stdPrice = 0.07
 
 func main() {
 	flag.Parse()
@@ -75,7 +74,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if pri["sjc1"]["baremetal_0"] >= stdPrice && !*spotty {
+	if *maxf == stdPrice && pri["sjc1"]["baremetal_0"] >= stdPrice {
 		spot = false
 		*maxf = 0
 	}
