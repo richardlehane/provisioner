@@ -15,6 +15,7 @@ write_files:
       Environment="RUNNER_URL=https://www.itforarchivists.com/siegfried/jobs/develop"
       Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/local/go/bin"
       ExecStart=/usr/local/go/bin/runner
+      ExecStart=/usr/local/go/bin/provisioner -delete -host=${HOST} -project=${PROJECT}
            
       [Install]
       WantedBy=default.target
@@ -37,6 +38,7 @@ runcmd:
   - "mkdir /usr/local/go"
   - "export GOPATH=/usr/local/go"
   - "go get github.com/richardlehane/runner/cmd/runner"
+  - "go get github.com/richardlehane/provisioner"
   - "go get github.com/richardlehane/siegfried/cmd/sf"
   - "go install github.com/richardlehane/siegfried/cmd/roy"
   - "mkdir /root/siegfried"

@@ -95,6 +95,7 @@ func readInstall(path, host string) string {
 	install = string(byt)
 	install = strings.Replace(install, "\r\n", "\n", -1)
 	install = strings.Replace(install, "${HOST}", host, -1)
+	install = strings.Replace(install, "${PROJECT}", *pnamef, -1)
 	if *replf != "" || *envf != "" || *filesf != "" {
 		var vals []string
 		if *replf != "" {
