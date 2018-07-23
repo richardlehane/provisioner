@@ -2,6 +2,8 @@
 packages: 
   - git
   - unzip
+  - python-pip
+  - openjdk-8-jre
 write_files:
   - content: | 
       [Unit]
@@ -13,8 +15,8 @@ write_files:
       User=root
       Environment="PACKET_AUTH_TOKEN=${PACKET_AUTH_TOKEN}"
       Environment="RUNNER_AUTH=${RUNNER_AUTH}"
-      Environment="RUNNER_URL=https://www.itforarchivists.com/siegfried/jobs/develop"
-      Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/local/go/bin"
+      Environment="RUNNER_URL=https://www.itforarchivists.com/siegfried/jobs/bench"
+      Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/local/go/bin:/root/droid"
       ExecStart=/usr/local/go/bin/runner
       ExecStart=/usr/local/go/bin/provisioner -delete -host=${HOST} -project=${PROJECT}
            
@@ -45,9 +47,14 @@ runcmd:
   - "mkdir /root/siegfried"
   - "cd $GOPATH/src/github.com/richardlehane/siegfried"
   - "cp -R cmd/roy/data/. /root/siegfried"
-  - "git checkout develop"
-  - "go build -o $GOPATH/bin/sfdev github.com/richardlehane/siegfried/cmd/sf"
-  - "go build -o $GOPATH/bin/sfprof -tags profile github.com/richardlehane/siegfried/cmd/sf"
+  - "pip install opf-fido"
+  - "mkdir /tmp/droid"
+  - "mkdir /root/droid"
+  - "wget -P /tmp/droid http://www.nationalarchives.gov.uk/documents/information-management/droid-binary-6.4-bin.zip"
+  - "unzip /tmp/droid/droid-binary-6.4-bin.zip -d /root/droid"
+  - "chmod +x /root/droid/droid.sh"
+  - "chmod +x /root/droid/droid-ui-6.4.jar"
+  - "chmod +x /root/droid/droid-command-line-6.4.jar"
   - [ systemctl, daemon-reload ]
   - [ systemctl, enable, runner.service ]
   - [ systemctl, start, --no-block, runner.service ]

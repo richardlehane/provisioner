@@ -20,7 +20,7 @@ var (
 	pnamef = flag.String("project", "bench", "name of your packet project")
 	hnamef = flag.String("host", "test.server", "host name for your new server")
 	lifef  = flag.Duration("life", time.Hour, "duration before server is terminated")
-	maxf   = flag.Float64("max", stdPrice, "maximum price per hour")
+	maxf   = flag.Float64("max", stdPrice, "maximum price per hour. Give -1 for an on demand instance.")
 	replf  = flag.String("replace", "", "comma-separated key-value pairs to replace ${KEY} strings in install")
 	envf   = flag.String("env", "", "comma-separated list of environment variables to replace ${KEY} strings in install")
 	filesf = flag.String("files", "", "comma-separated list of file names to replace ${KEY} strings in install")
@@ -70,13 +70,20 @@ func main() {
 	install := readInstall(flag.Arg(0), host)
 	// now price arbitrage
 	spot := true
-	pri, _, err := c.SpotMarket.Prices()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if *maxf == stdPrice && pri["sjc1"]["baremetal_0"] >= stdPrice {
+	// get an on demand instance
+	if *maxf < 0 {
 		spot = false
 		*maxf = 0
+	} else {
+		pri, _, err := c.SpotMarket.Prices()
+		if err != nil {
+			log.Fatal(err)
+		}
+		// if we bid the std price, and the spot is over that, then just get an on demand instance
+		if *maxf == stdPrice && pri["sjc1"]["baremetal_0"] >= stdPrice {
+			spot = false
+			*maxf = 0
+		}
 	}
 	dcr := provision(pid, host, install, spot)
 	_, _, err = c.Devices.Create(dcr)
