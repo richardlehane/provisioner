@@ -79,8 +79,8 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		// if we bid the std price, and the spot is over that, then just get an on demand instance
-		if *maxf == stdPrice && pri["sjc1"]["baremetal_0"] >= stdPrice {
+		// if we bid the std price or more, and the spot is over that, then just get an on demand instance
+		if *maxf >= stdPrice && pri["sjc1"]["baremetal_0"] >= stdPrice {
 			spot = false
 			*maxf = 0
 		}
