@@ -52,7 +52,8 @@ runcmd:
   - "mkdir /root/droid"
   - "wget -P /tmp/droid http://www.nationalarchives.gov.uk/documents/information-management/droid-binary-6.4-bin.zip"
   - "unzip /tmp/droid/droid-binary-6.4-bin.zip -d /root/droid"
-  - "chmod +x /root/droid/droid.sh"
+  - "mv /root/droid/droid.sh /root/droid/droid"
+  - "chmod +x /root/droid/droid"
   - "chmod +x /root/droid/droid-ui-6.4.jar"
   - "chmod +x /root/droid/droid-command-line-6.4.jar"
   - [ systemctl, daemon-reload ]
