@@ -20,13 +20,27 @@ func setup(t *testing.T) {
 	return
 }
 
+func TestPlans(t *testing.T) {
+	setup(t)
+	pla, _, err := testClient.Plans.List()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, v := range pla {
+		t.Logf("slug: %s; name: %s; description: %s; specs: %s; price: %s\n",
+			v.Slug, v.Name, v.Description, v.Specs, v.Pricing)
+	}
+}
+
 func TestPrices(t *testing.T) {
 	setup(t)
 	pri, _, err := testClient.SpotMarket.Prices()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("baremetal_0 price: %v\n", pri["sjc1"]["baremetal_0"])
+	for k, v := range pri["sjc1"] {
+		t.Logf("%s price: %v\n", k, v)
+	}
 }
 
 func TestOSes(t *testing.T) {
@@ -41,6 +55,6 @@ func TestOSes(t *testing.T) {
 }
 
 func TestInstall(t *testing.T) {
-	inst := readInstall("scripts/bench.yaml", "")
+	inst := readInstall("scripts/bench.yaml", "", "")
 	t.Log(inst)
 }
