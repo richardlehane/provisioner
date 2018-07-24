@@ -80,7 +80,7 @@ func main() {
 		return
 	}
 	var machine string
-	plans, _, err := testClient.Plans.List()
+	plans, _, err := c.Plans.List()
 	if err != nil {
 		log.Fatal(err)
 	}
