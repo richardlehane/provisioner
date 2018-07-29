@@ -27,8 +27,8 @@ func TestPlans(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, v := range pla {
-		t.Logf("slug: %s; name: %s; description: %s; specs: %s; price: %s\n",
-			v.Slug, v.Name, v.Description, v.Specs, v.Pricing)
+		t.Logf("slug: %s; name: %s\n",
+			v.Slug, v.Name)
 	}
 }
 

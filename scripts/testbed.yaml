@@ -1,0 +1,56 @@
+#cloud-config
+packages: 
+  - git
+  - unzip
+  - python-pip
+  - openjdk-8-jre
+write_files:
+  - content: | 
+      [Unit]
+      Description=Copy corpora to machine
+      After=default.target
+           
+      [Service]
+      Type=oneshot
+      User=root
+      ExecStart=/usr/bin/rclone copy bb:corpora /root/corpora --transfers 32
+      
+      [Install]
+      WantedBy=default.target
+    owner: root:root
+    permissions: '0644'
+    path: /etc/systemd/system/rclone.service
+  - content: | 
+      [bb]
+      type = b2
+      account = ${BB_ACCOUNT}
+      key = ${BB_KEY}
+      endpoint = 
+    owner: root:root
+    permissions: '0644'
+    path: /root/.config/rclone/rclone.conf
+runcmd: 
+  - "curl https://rclone.org/install.sh | /bin/bash -s"
+  - "rclone config file"
+  - 'eval "$(curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | GIMME_GO_VERSION=stable bash)"'
+  - "mkdir /usr/local/go"
+  - "export GOPATH=/usr/local/go"
+  - "go get github.com/richardlehane/runner/cmd/runner"
+  - "go get github.com/richardlehane/provisioner"
+  - "go get github.com/richardlehane/siegfried/cmd/sf"
+  - "go install github.com/richardlehane/siegfried/cmd/roy"
+  - "mkdir /root/siegfried"
+  - "cd $GOPATH/src/github.com/richardlehane/siegfried"
+  - "cp -R cmd/roy/data/. /root/siegfried"
+  - "pip install opf-fido"
+  - "mkdir /tmp/droid"
+  - "mkdir /root/droid"
+  - "wget -P /tmp/droid http://www.nationalarchives.gov.uk/documents/information-management/droid-binary-6.4-bin.zip"
+  - "unzip /tmp/droid/droid-binary-6.4-bin.zip -d /root/droid"
+  - "mv /root/droid/droid.sh /root/droid/droid"
+  - "chmod +x /root/droid/droid"
+  - "chmod +x /root/droid/droid-ui-6.4.jar"
+  - "chmod +x /root/droid/droid-command-line-6.4.jar"
+  - [ systemctl, daemon-reload ]
+  - [ systemctl, enable, rclone.service ]
+  - [ systemctl, start, --no-block, rclone.service ]
