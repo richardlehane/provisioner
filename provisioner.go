@@ -113,7 +113,7 @@ func main() {
 			log.Fatal(err)
 		}
 		// if we bid the std price or more, and the spot is over that, then just get an on demand instance
-		if pri[*dcf][*slugf] >= *maxf {
+		if *maxf >= stdPrices[machine] && pri[*dcf][*slugf] >= *maxf {
 			spot = false
 			*maxf = 0
 		}
