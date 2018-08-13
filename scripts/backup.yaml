@@ -1,5 +1,6 @@
 #cloud-config
 packages: 
+  - git
   - unzip
 write_files:
   - content: | 
@@ -10,7 +11,9 @@ write_files:
       [Service]
       Type=oneshot
       User=root
+      Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/local/go/bin"
       ExecStart=/usr/bin/rclone sync asa: bb:asabackup --fast-list --drive-impersonate ${DRIVE_USER} --transfers 32
+      ExecStart=/usr/local/go/bin/provisioner -delete -host=${HOST} -project=${PROJECT}
       
       [Install]
       WantedBy=default.target
@@ -34,6 +37,10 @@ write_files:
 runcmd: 
   - "curl https://rclone.org/install.sh | /bin/bash -s"
   - "rclone config file"
+  - 'eval "$(curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | GIMME_GO_VERSION=stable bash)"'
+  - "mkdir /usr/local/go"
+  - "export GOPATH=/usr/local/go"
+  - "go get github.com/richardlehane/provisioner"
   - [ systemctl, daemon-reload ]
   - [ systemctl, enable, rclone.service ]
   - [ systemctl, start, --no-block, rclone.service ]
