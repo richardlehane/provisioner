@@ -2,7 +2,7 @@
 packages: 
   - git
   - unzip
-  - python-setuptools
+  - python-pip
   - openjdk-8-jre
 write_files:
   - content: | 
@@ -42,13 +42,7 @@ runcmd:
   - "mkdir /root/siegfried"
   - "cd $GOPATH/src/github.com/richardlehane/siegfried"
   - "cp -R cmd/roy/data/. /root/siegfried"
-  - "mkdir /tmp/fido"
-  - "mkdir /root/fido"
-  - "wget -P /tmp/fido https://github.com/openpreserve/fido/archive/v1.3.8-93.zip"
-  - "unzip /tmp/fido/v1.3.8-93.zip -d /tmp/fido"
-  - "cp -R /tmp/fido/fido-1.3.8-93/. /root/fido"
-  - "cd /root/fido"
-  - "python setup.py install"
+  - "pip install opf-fido"
   - "mkdir /tmp/droid"
   - "mkdir /root/droid"
   - "wget -P /tmp/droid http://www.nationalarchives.gov.uk/documents/information-management/droid-binary-6.4-bin.zip"
