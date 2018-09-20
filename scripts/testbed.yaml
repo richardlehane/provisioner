@@ -51,6 +51,7 @@ runcmd:
   - "chmod +x /root/droid/droid"
   - "chmod +x /root/droid/droid-ui-6.4.jar"
   - "chmod +x /root/droid/droid-command-line-6.4.jar"
+  - "/root/droid/droid -d"
   - [ systemctl, daemon-reload ]
   - [ systemctl, enable, rclone.service ]
   - [ systemctl, start, --no-block, rclone.service ]
