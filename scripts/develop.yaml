@@ -50,6 +50,7 @@ runcmd:
   - "git checkout develop"
   - "go build -o $GOPATH/bin/sfdev github.com/richardlehane/siegfried/cmd/sf"
   - "go build -o $GOPATH/bin/sfprof -tags profile github.com/richardlehane/siegfried/cmd/sf"
+  - "go build -o $GOPATH/bin/roydev github.com/richardlehane/siegfried/cmd/roy"
   - "ln -s $(which go) /usr/local/bin/go"
   - [ systemctl, daemon-reload ]
   - [ systemctl, enable, runner.service ]
