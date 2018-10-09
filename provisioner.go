@@ -182,7 +182,7 @@ func provision(pid, host, install string, spot bool) *packngo.DeviceCreateReques
 	term := &packngo.Timestamp{Time: time.Now().Add(*lifef)}
 	return &packngo.DeviceCreateRequest{
 		Hostname:        host,
-		Facility:        *dcf,
+		Facility:        []string{*dcf},
 		Plan:            *slugf,
 		OS:              *osf,
 		ProjectID:       pid,
