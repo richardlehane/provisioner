@@ -22,7 +22,7 @@ func setup(t *testing.T) {
 
 func TestPlans(t *testing.T) {
 	setup(t)
-	pla, _, err := testClient.Plans.List()
+	pla, _, err := testClient.Plans.List(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
