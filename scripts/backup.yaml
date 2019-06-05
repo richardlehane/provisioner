@@ -12,9 +12,9 @@ write_files:
       Type=oneshot
       User=root
       Environment="PACKET_AUTH_TOKEN=${PACKET_AUTH_TOKEN}"
-      Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/local/go/bin"
+      Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/go/bin"
       ExecStart=/usr/bin/rclone sync asa: bb:asabackup --fast-list --drive-impersonate ${DRIVE_USER} --transfers 32
-      ExecStart=/usr/local/go/bin/provisioner -delete -host=${HOST} -project=${PROJECT}
+      ExecStart=/root/go/bin/provisioner -delete -host=${HOST} -project=${PROJECT}
       
       [Install]
       WantedBy=default.target
@@ -39,8 +39,9 @@ runcmd:
   - "curl https://rclone.org/install.sh | /bin/bash -s"
   - "rclone config file"
   - 'eval "$(curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | GIMME_GO_VERSION=stable bash)"'
-  - "mkdir /usr/local/go"
-  - "export GOPATH=/usr/local/go"
+  - "mkdir /root/go"
+  - "export GOPATH=/root/go"
+  - "export XDG_CACHE_HOME=/root/.cache"
   - "go get github.com/richardlehane/provisioner"
   - [ systemctl, daemon-reload ]
   - [ systemctl, enable, rclone.service ]

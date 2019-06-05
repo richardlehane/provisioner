@@ -17,9 +17,9 @@ write_files:
       Environment="RUNNER_MACH=${MACHINE}"
       Environment="RUNNER_AUTH=${RUNNER_AUTH}"
       Environment="RUNNER_URL=https://www.itforarchivists.com/siegfried/jobs/bench"
-      Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/local/go/bin:/root/droid"
-      ExecStart=/usr/local/go/bin/runner
-      ExecStart=/usr/local/go/bin/provisioner -delete -host=${HOST} -project=${PROJECT}
+      Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/go/bin:/root/droid"
+      ExecStart=/root/go/bin/runner
+      ExecStart=/root/go/bin/provisioner -delete -host=${HOST} -project=${PROJECT}
            
       [Install]
       WantedBy=default.target
@@ -39,14 +39,15 @@ runcmd:
   - "curl https://rclone.org/install.sh | /bin/bash -s"
   - "rclone config file"
   - 'eval "$(curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | GIMME_GO_VERSION=stable bash)"'
-  - "mkdir /usr/local/go"
-  - "export GOPATH=/usr/local/go"
+  - "mkdir /root/go"
+  - "export GOPATH=/root/go"
+  - "export XDG_CACHE_HOME=/root/.cache"
   - "go get github.com/richardlehane/runner/cmd/runner"
   - "go get github.com/richardlehane/provisioner"
   - "go get github.com/richardlehane/siegfried/cmd/sf"
   - "go install github.com/richardlehane/siegfried/cmd/roy"
   - "mkdir /root/siegfried"
-  - "cd $GOPATH/src/github.com/richardlehane/siegfried"
+  - "cd /root/go/src/github.com/richardlehane/siegfried"
   - "cp -R cmd/roy/data/. /root/siegfried"
   - "pip install opf-fido"
   - "mkdir /tmp/droid"
