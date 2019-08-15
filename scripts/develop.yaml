@@ -16,7 +16,7 @@ write_files:
       Environment="RUNNER_MACH=${MACHINE}"
       Environment="RUNNER_AUTH=${RUNNER_AUTH}"
       Environment="RUNNER_URL=https://www.itforarchivists.com/siegfried/jobs/develop"
-      Environment="PATH=/bin:/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/go/bin"
+      Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin:/root/go/bin"
       ExecStart=/root/go/bin/runner
       ExecStart=/root/go/bin/provisioner -delete -host=${HOST} -project=${PROJECT}
            
@@ -53,6 +53,7 @@ runcmd:
   - "go build -o /root/go/bin/sfdev github.com/richardlehane/siegfried/cmd/sf"
   - "go build -o /root/go/bin/sfprof -tags profile github.com/richardlehane/siegfried/cmd/sf"
   - "go build -o /root/go/bin/roydev github.com/richardlehane/siegfried/cmd/roy"
+  - "mkdir /root/bin"
   - "ln -s $(which go) /root/bin/go"
   - [ systemctl, daemon-reload ]
   - [ systemctl, enable, runner.service ]
