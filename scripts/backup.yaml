@@ -26,11 +26,12 @@ write_files:
       type = b2
       account = ${BB_ACCOUNT}
       key = ${BB_KEY}
-      endpoint = 
 
       [asa]
       type = drive
-      scope = drive.readonly
+      client_id = ${DRIVE_ID}
+      client_secret = ${DRIVE_SECRET}
+      scope = drive
       service_account_credentials = ${service.json}
     owner: root:root
     permissions: '0644'
