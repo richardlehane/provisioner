@@ -26,6 +26,7 @@ var stdPrices = map[string]float64{
 }
 
 var (
+	dumpf  = flag.Bool("dump", false, "dump config file and quit (for debugging)")
 	delf   = flag.Bool("delete", false, "delete server with host name -host")
 	dcf    = flag.String("dc", "sjc1", "packet data centre location")
 	slugf  = flag.String("slug", "baremetal_0", "slug of machine type")
@@ -97,6 +98,10 @@ func main() {
 	}
 	host := strings.Replace(*hnamef, "RAND", crock32.PUID(), -1)
 	install := readInstall(flag.Arg(0), host, machine)
+	if *dumpf {
+		log.Print(install)
+		return
+	}
 	// now price arbitrage
 	spot := true
 	// get an on demand instance
