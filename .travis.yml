@@ -16,8 +16,7 @@ install:
 - go install github.com/richardlehane/provisioner
 script:
 - go test -v github.com/richardlehane/provisioner
-- provisioner -project=archivists -host=backup-RAND.archivists.org.au -env=PACKET_AUTH_TOKEN,BB_ACCOUNT,BB_KEY,DRIVE_USER,DRIVE_ID,DRIVE_SECRET
-  -files $HOME/gopath/src/github.com/richardlehane/provisioner/service.json $HOME/gopath/src/github.com/richardlehane/provisioner/scripts/backup.yaml
+- provisioner -project=archivists -host=backup-RAND.archivists.org.au -env=PACKET_AUTH_TOKEN,BB_ACCOUNT,BB_KEY,DRIVE_USER,DRIVE_ID,DRIVE_SECRET -files $HOME/gopath/src/github.com/richardlehane/provisioner/service.json $HOME/gopath/src/github.com/richardlehane/provisioner/scripts/backup.yaml
 before_install:
 - openssl aes-256-cbc -K $encrypted_18faf0df1b3e_key -iv $encrypted_18faf0df1b3e_iv
   -in service.json.enc -out service.json -d
