@@ -1,6 +1,6 @@
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/packethost/packngo v0.1.1-0.20190328091043-c53c0868b5e0 h1:RMIe5Fipij2mbK/25Hbp1xhenrc22OTp5RrVYrMClHw=
-github.com/packethost/packngo v0.1.1-0.20190328091043-c53c0868b5e0/go.mod h1:RQHg5xR1F614BwJyepfMqrKN+32IH0i7yX+ey43rEeQ=
+github.com/packethost/packngo v0.2.0 h1:mSlzOof8PsOWCy78sBMt/PwMJTEjjQ/rRvMixu4Nm6c=
+github.com/packethost/packngo v0.2.0/go.mod h1:RQHg5xR1F614BwJyepfMqrKN+32IH0i7yX+ey43rEeQ=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/richardlehane/crock32 v1.0.1 h1:GV9EqtAr7RminQ8oGrDt3gYXkzDDPJ5fROaO1Mux14g=
 github.com/richardlehane/crock32 v1.0.1/go.mod h1:xUIlLABtHBgs1bNIBdUQR9F2xtRzS0TujtbR68hmEWU=
@@ -8,5 +8,14 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67 h1:ng3VDlRp5/DHpSWl02R4rM9I+8M2rhmsuLwAMmkLQWE=
 golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
+golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
+golang.org/x/crypto v0.0.0-20191112222119-e1110fd1c708 h1:pXVtWnwHkrWD9ru3sDxY/qFK/bfc0egRovX91EjWjf4=
+golang.org/x/crypto v0.0.0-20191112222119-e1110fd1c708/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
+golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
 golang.org/x/sys v0.0.0-20190209173611-3b5209105503 h1:5SvYFrOM3W8Mexn9/oA44Ji7vhXAZQ9hiP+1Q/DMrWg=
 golang.org/x/sys v0.0.0-20190209173611-3b5209105503/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
+golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
+golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20191115151921-52ab43148777 h1:wejkGHRTr38uaKRqECZlsCsJ1/TGxIyFbH32x5zUdu4=
+golang.org/x/sys v0.0.0-20191115151921-52ab43148777/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
