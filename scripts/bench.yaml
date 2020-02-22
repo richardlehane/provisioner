@@ -56,8 +56,8 @@ runcmd:
   - "unzip /tmp/droid/droid-binary-6.5-SNAPSHOT-bin.zip -d /root/droid"
   - "mv /root/droid/droid.sh /root/droid/droid"
   - "chmod +x /root/droid/droid"
-  - "chmod +x /root/droid/droid-ui-6.5.jar"
-  - "chmod +x /root/droid/droid-command-line-6.5.jar"
+  - "chmod +x /root/droid/droid-ui-6.5-SNAPSHOT.jar"
+  - "chmod +x /root/droid/droid-command-line-6.5-SNAPSHOT.jar"
   - "/root/droid/droid -d"
   - [ systemctl, daemon-reload ]
   - [ systemctl, enable, runner.service ]
