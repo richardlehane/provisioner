@@ -52,7 +52,7 @@ runcmd:
   - "pip install opf-fido"
   - "mkdir /tmp/droid"
   - "mkdir /root/droid"
-  - "wget -P /tmp/droid https://github.com/digital-preservation/droid/releases/download/droid-6.5-RC2/droid-binary-6.5-SNAPSHOT-bin.zip"
+  - "wget -P /tmp/droid https://github.com/digital-preservation/droid/releases/download/droid-6.5-RC3/droid-binary-6.5-SNAPSHOT-bin.zip"
   - "unzip /tmp/droid/droid-binary-6.5-SNAPSHOT-bin.zip -d /root/droid"
   - "mv /root/droid/droid.sh /root/droid/droid"
   - "chmod +x /root/droid/droid"
