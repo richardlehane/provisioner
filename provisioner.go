@@ -76,7 +76,7 @@ func main() {
 		if did == "" {
 			log.Fatalf("Can't find hostname %s in project %s\n", *hnamef, *pnamef)
 		}
-		_, err = c.Devices.Delete(did)
+		_, err = c.Devices.Delete(did, true)
 		log.Print(err)
 		return
 	}
