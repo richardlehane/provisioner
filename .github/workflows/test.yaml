@@ -13,5 +13,10 @@ jobs:
           brew install go
       - name: Install siegfried
         run: go install github.com/richardlehane/siegfried/cmd/sf@latest
+      - run: |
+          ls $(go env GOPATH)/pkg
+          ls $(go env GOPATH)/src
+          ls $(go env GOPATH)/bin
       - name: Test siegfried
-        run: sf -version
+        run: $(go env GOPATH)/bin/sf -version
+      
