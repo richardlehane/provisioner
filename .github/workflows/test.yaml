@@ -12,6 +12,6 @@ jobs:
           brew remove go@1.15
           brew install go
       - name: Install siegfried
-        run: go install github.com/richardlehane/testsf/cmd/sf
+        run: go install github.com/richardlehane/testsf/cmd/sf@latest
       - name: Test siegfried
         run: sf -version
