@@ -30,7 +30,7 @@ var (
 	delf   = flag.Bool("delete", false, "delete server with host name -host")
 	dcf    = flag.String("dc", "sjc1", "packet data centre location")
 	slugf  = flag.String("slug", "baremetal_0", "slug of machine type")
-	osf    = flag.String("os", "ubuntu_18_04", "os type")
+	osf    = flag.String("os", "ubuntu_20_04", "os type")
 	pnamef = flag.String("project", "bench", "name of your packet project")
 	hnamef = flag.String("host", "test.server", "host name for your new server")
 	lifef  = flag.Duration("life", time.Hour, "duration before server is terminated")
