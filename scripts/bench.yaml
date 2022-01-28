@@ -2,7 +2,7 @@
 packages: 
   - git
   - unzip
-  - python-pip
+  - python3-pip
   - openjdk-8-jre
 write_files:
   - content: | 
@@ -39,21 +39,22 @@ runcmd:
   - "curl https://rclone.org/install.sh | /bin/bash -s"
   - "rclone config file"
   - 'eval "$(curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | GIMME_GO_VERSION=stable bash)"'
-  - "mkdir /root/go"
+  - "mkdir -p /root/go/src"
   - "export GOPATH=/root/go"
-  - "export XDG_CACHE_HOME=/root/.cache"
-  - "go install github.com/richardlehane/runner/cmd/runner"
-  - "go install github.com/richardlehane/provisioner"
+  - "go install github.com/richardlehane/runner/cmd/runner@latest"
+  - "go install github.com/richardlehane/provisioner@latest"
+  - "cd /root/go/src"
+  - "git clone https://github.com/richardlehane/siegfried.git"
+  - "cd siegfried"
   - "go install github.com/richardlehane/siegfried/cmd/sf"
   - "go install github.com/richardlehane/siegfried/cmd/roy"
   - "mkdir /root/siegfried"
-  - "cd /root/go/src/github.com/richardlehane/siegfried"
   - "cp -R cmd/roy/data/. /root/siegfried"
   - "pip install opf-fido"
   - "mkdir /tmp/droid"
   - "mkdir /root/droid"
   - "wget -P /tmp/droid https://github.com/digital-preservation/droid/releases/download/droid-6.5/droid-binary-6.5-bin.zip"
-  - "unzip /tmp/droid/ddroid-binary-6.5-bin.zip -d /root/droid"
+  - "unzip /tmp/droid/droid-binary-6.5-bin.zip -d /root/droid"
   - "mv /root/droid/droid.sh /root/droid/droid"
   - "chmod +x /root/droid/droid"
   - "chmod +x /root/droid/droid-ui-6.5.jar"
