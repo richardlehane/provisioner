@@ -35,12 +35,13 @@ write_files:
     owner: root:root
     permissions: '0644'
     path: /root/.config/rclone/rclone.conf
-runcmd: 
+runcmd:
+  - "mkdir -p /root/go/src"
+  - "export GOPATH=/root/go"
+  - "export HOME=/root"
   - "curl https://rclone.org/install.sh | /bin/bash -s"
   - "rclone config file"
   - 'eval "$(curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | GIMME_GO_VERSION=stable bash)"'
-  - "mkdir -p /root/go/src"
-  - "export GOPATH=/root/go"
   - "go install github.com/richardlehane/runner/cmd/runner@latest"
   - "go install github.com/richardlehane/provisioner@latest"
   - "cd /root/go/src"
