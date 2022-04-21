@@ -236,5 +236,9 @@ func throttle(url, selector, duration string) (bool, string) {
 	if err != nil {
 		return true, "throttling: bad date"
 	}
-	return true, "no reason"	
+	next := t.AddDate(0, 0, days)
+	if time.Now().After(next) {
+		return false, ""
+	}
+	return true, "throttling: next run is " + next	
 }
