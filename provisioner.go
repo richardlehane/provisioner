@@ -4,11 +4,16 @@ import (
 	"flag"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"strconv"
 	"time"
 
+	"golang.org/x/net/html"
+	
+	"github.com/andybalholm/cascadia"
 	"github.com/packethost/packngo"
 	"github.com/richardlehane/crock32"
 )
@@ -197,4 +202,39 @@ func provision(pid, host, install string, spot bool) *packngo.DeviceCreateReques
 		SpotPriceMax:    *maxf,
 		TerminationTime: term,
 	}
+}
+
+func throttle(url, selector, duration string) (bool, string) {
+	if url == "" && selector == "" && duration == "" {
+	  return false, ""
+	}
+	if url == "" || selector == "" || duration == "" {
+		return true, "throttling: must give url, selector and duration values"
+	}
+	days, err := strconv.Atoi(duration)
+	if err != nil {
+	return true, "throttling: invalid duration"
+	}
+	sel, err := cascadia.Compile(selector)
+	if err != nil {
+		return true, "throttling: cascadia.Compile failed")
+	}
+	resp, err := http.Get(url)
+	if err != nil {
+	  return true, "throttling: http.Get failed"
+	}
+	defer resp.Body.Close()
+	node, err := html.Parse(resp.Body)
+	if err != nil {
+		return true, "throttling: html.Parse failed")
+	}
+	el := sel.MatchFirst(node)
+	if el == nil || el.FirstChild == nil || len(el.FirstChild.Data) < 10 {
+	  return true, "throttling: selector found no node or no date")
+	}
+	t, err := time.Parse("2006-01-02", el.FirstChild.Data[:10])
+	if err != nil {
+		return true, "throttling: bad date"
+	}
+	return true, "no reason"	
 }
