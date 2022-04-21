@@ -60,6 +60,6 @@ func TestInstall(t *testing.T) {
 }
 
 func TestThrottle(t *testing.T) {
-	err := throttle("https://www.itforarchivists.com/siegfried/develop", "div div:last-child p a", "365") 
+	err := throttle("https://www.itforarchivists.com/siegfried/develop", "div:nth-of-type(7) a", "365") 
 	t.Log(err)
 }
