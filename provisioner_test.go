@@ -58,3 +58,8 @@ func TestInstall(t *testing.T) {
 	inst := readInstall("scripts/bench.yaml", "", "")
 	t.Log(inst)
 }
+
+func TestThrottle() {
+	err := throttle("https://www.itforarchivists.com/siegfried/develop", "div div:last-child p a", "10") 
+	t.Log(err)
+}
