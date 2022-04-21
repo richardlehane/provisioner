@@ -91,7 +91,7 @@ func main() {
 	}
 	// check if a throttle period is given
 	terr := throttle(*tuf, *tsf, *tdf)
-	if terr {
+	if terr != nil {
 		log.Fatalf("throtting: %s\n", terr)
 	}
 	var machine string
@@ -235,7 +235,7 @@ func throttle(url, selector, duration string) error {
 	defer resp.Body.Close()
 	node, err := html.Parse(resp.Body)
 	if err != nil {
-		err
+		return err
 	}
 	el := sel.MatchFirst(node)
 	if el == nil || el.FirstChild == nil || len(el.FirstChild.Data) < 10 {
@@ -243,11 +243,11 @@ func throttle(url, selector, duration string) error {
 	}
 	t, err := time.Parse("2006-01-02", el.FirstChild.Data[:10])
 	if err != nil {
-		err
+		return err
 	}
 	next := t.AddDate(0, 0, days)
 	if time.Now().After(next) {
-		nil
+		return nil
 	}
-	return errors.New("next run is " + next)
+	return errors.New("next run is " + next.String())
 }
