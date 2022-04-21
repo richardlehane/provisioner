@@ -1,18 +1,19 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/net/html"
-	
+
 	"github.com/andybalholm/cascadia"
 	"github.com/packethost/packngo"
 	"github.com/richardlehane/crock32"
@@ -43,6 +44,9 @@ var (
 	replf  = flag.String("replace", "", "comma-separated key-value pairs to replace ${KEY} strings in install")
 	envf   = flag.String("env", "", "comma-separated list of environment variables to replace ${KEY} strings in install")
 	filesf = flag.String("files", "", "comma-separated list of file names to replace ${KEY} strings in install")
+	tuf    = flag.String("tu", "", "URL of html page with a date to calculate a throttle period")
+	tsf    = flag.String("ts", "", "CSS selector for getting date in YYYY-MM-DD format to calculate a throttle period")
+	tdf    = flag.String("td", "", "number of days to add to date in order to calculate a throttle period")
 )
 
 func main() {
@@ -84,6 +88,11 @@ func main() {
 		_, err = c.Devices.Delete(did, true)
 		log.Print(err)
 		return
+	}
+	// check if a throttle period is given
+	terr := throttle(*tuf, *tsf, *tdf)
+	if terr {
+		log.Fatalf("throtting: %s\n", terr)
 	}
 	var machine string
 	plans, _, err := c.Plans.List(nil)
@@ -204,41 +213,41 @@ func provision(pid, host, install string, spot bool) *packngo.DeviceCreateReques
 	}
 }
 
-func throttle(url, selector, duration string) (bool, string) {
+func throttle(url, selector, duration string) error {
 	if url == "" && selector == "" && duration == "" {
-	  return false, ""
+		return nil
 	}
 	if url == "" || selector == "" || duration == "" {
-		return true, "throttling: must give url, selector and duration values"
+		return errors.New("must give url, selector and duration values")
 	}
 	days, err := strconv.Atoi(duration)
 	if err != nil {
-	return true, "throttling: invalid duration"
+		return errors.New("invalid duration")
 	}
 	sel, err := cascadia.Compile(selector)
 	if err != nil {
-		return true, "throttling: cascadia.Compile failed")
+		return err
 	}
 	resp, err := http.Get(url)
 	if err != nil {
-	  return true, "throttling: http.Get failed"
+		return err
 	}
 	defer resp.Body.Close()
 	node, err := html.Parse(resp.Body)
 	if err != nil {
-		return true, "throttling: html.Parse failed")
+		err
 	}
 	el := sel.MatchFirst(node)
 	if el == nil || el.FirstChild == nil || len(el.FirstChild.Data) < 10 {
-	  return true, "throttling: selector found no node or no date")
+		return errors.New("selector found no node, empty node or no date")
 	}
 	t, err := time.Parse("2006-01-02", el.FirstChild.Data[:10])
 	if err != nil {
-		return true, "throttling: bad date"
+		err
 	}
 	next := t.AddDate(0, 0, days)
 	if time.Now().After(next) {
-		return false, ""
+		nil
 	}
-	return true, "throttling: next run is " + next	
+	return errors.New("next run is " + next)
 }
