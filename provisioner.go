@@ -19,23 +19,11 @@ import (
 	"github.com/richardlehane/crock32"
 )
 
-var stdPrices = map[string]float64{
-	"t1.small.x86":  0.07, // Tiny		Intel Atom C2550	x86	4 Cores @ 2.4 GHz	8 GB	80 GB
-	"m2.xlarge.x86": 2,    // Memory	Intel Xeon Gold 5120 (2x)	x86	28 Cores @ 2.2 GHz	384 GB
-	"c1.small.x86":  0.4,  // Compute	Intel Xeon E3-1240	x86	4 Cores @ 3.5 GHz	32 GB	120 GB
-	"c2.medium.x86": 1,    // Compute	AMD EPYC 7401p	x86	24 Cores @ 2.2 GHz	64 GB	960 GB
-	"m1.xlarge.x86": 1.7,  // Memory	Intel Xeon E5-2650 (2x)	x86	24 Cores @ 2.2 GHz	256 GB	2.8 TB
-	"c1.large.arm":  0.5,  // Compute	Cavium ThunderX (2x)	Armv8	96 Cores @ 2.0 GHz	128 GB	250 GB
-	"x1.small.x86":  0.4,  // Accelerator	Intel Xeon E3-1578L	x86	4 Cores x 2.0 GHz	32 GB	240 GB
-	"c1.xlarge.x86": 1.75, // Compute	Intel Xeon E5-2640 (2x)	x86	16 Cores @ 2.6 GHz	128 GB	1.6 TB NVMe
-	"s1.large.x86":  1.5,  // Storage	Intel Xeon E5-2620 (2x)	x86	16 Cores @ 2.1 GHz	128 GB	24 TB
-}
-
 var (
 	dumpf  = flag.Bool("dump", false, "dump config file and quit (for debugging)")
 	delf   = flag.Bool("delete", false, "delete server with host name -host")
 	dcf    = flag.String("dc", "sjc1", "packet data centre location")
-	slugf  = flag.String("slug", "baremetal_0", "slug of machine type")
+	slugf  = flag.String("slug", "c3.small.x86", "slug of machine type")
 	osf    = flag.String("os", "ubuntu_20_04", "os type")
 	pnamef = flag.String("project", "bench", "name of your packet project")
 	hnamef = flag.String("host", "test.server", "host name for your new server")
@@ -48,6 +36,25 @@ var (
 	tsf    = flag.String("ts", "", "CSS selector for getting date in YYYY-MM-DD format to calculate a throttle period")
 	tdf    = flag.String("td", "", "number of days to add to date in order to calculate a throttle period")
 )
+
+var stdPrices = map[string]float64{
+	"c3.small.x86: 0.5, // https://metal.equinix.com/product/servers/c3-small/ 8 cores @ 3.40 GHz, 32GB RAM, 960 GB SSD
+	"c3.medium.x86": 1.1, // https://metal.equinix.com/product/servers/c3-medium/ 24 cores @ 2.8 GHz, 64GB DDR4 RAM, 960 GB SSD
+	"m3.small.x86": 1.05, // name: m3.small.x86 https://metal.equinix.com/product/servers/m3-small/ 8 cores @ 2.8 GHz, 64GB RAM, 960 GB SSD
+	"m3.large.x86": 2, // https://metal.equinix.com/product/servers/m3-large/ 32 cores @ 2.5 GHz, 256GB DDR4 RAM, 2 x 3.8 TB NVMe
+	"s3.xlarge.x86": 1.85, // https://metal.equinix.com/product/servers/s3-xlarge/ 24 cores @ 2.2 GHz, 192GB DDR4 RAM, 1.9 TB SSD
+}
+
+func beefier(than string) []string {
+	prc := stdPrices[than]
+	ret := make([]string,0,len(stdPrices))
+	for k, v := range stdPrices {
+		if v > prc {
+			ret = append(ret, k)
+		}
+	}
+	return ret
+}
 
 func main() {
 	flag.Parse()
@@ -111,12 +118,8 @@ func main() {
 		log.Fatalf("Don't have a price for machine type %s\n", machine)
 	}
 	host := strings.Replace(*hnamef, "RAND", crock32.PUID(), -1)
-	install := readInstall(flag.Arg(0), host, machine)
-	if *dumpf {
-		log.Print(install)
-		return
-	}
 	// now price arbitrage
+	plan := *slugf
 	spot := true
 	// get an on demand instance
 	if *maxf < 0 {
@@ -131,13 +134,42 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		// if we bid the std price or more, and the spot is over that, then just get an on demand instance
+		// if we bid the std price or more, and the spot is over that, try to upgrade
 		if *maxf >= stdPrices[machine] && pri[*dcf][*slugf] >= *maxf {
-			spot = false
-			*maxf = 0
+			// try an upgrade
+			machines := beefier(machine)
+			slugs := make([]string, len(machines))
+			for _, p := range plans {
+			  for i, mach := range machines {
+		            if p.Name == mach {
+			      slugs[i] = p.Slug
+		            }
+	                  }
+			}
+			bestPrice := stdPrices[machine]
+			for idx, s := range slugs {
+				if pri[*dcf][s] < bestPrice {
+				  bestPrice = pri[*dcf][s]
+				  plan = s
+				  machine = machines[idx]
+				  *maxf = bestPrice
+				}
+			}
+			// if we haven't upgraded, just get an on demand instance
+			if plan == *slugf { 
+			  spot = false
+			  *maxf = 0
+			}
 		}
 	}
-	dcr := provision(pid, host, install, spot)
+	// populate install
+	install := readInstall(flag.Arg(0), host, machine)
+	if *dumpf {
+		log.Print(install)
+		return
+	}
+	// provision
+	dcr := provision(pid, host, plan, install, spot)
 	_, _, err = c.Devices.Create(dcr)
 	log.Print(err)
 }
@@ -197,12 +229,12 @@ func readInstall(path, host, machine string) string {
 	return install
 }
 
-func provision(pid, host, install string, spot bool) *packngo.DeviceCreateRequest {
+func provision(pid, host, plan, install string, spot bool) *packngo.DeviceCreateRequest {
 	term := &packngo.Timestamp{Time: time.Now().Add(*lifef)}
 	return &packngo.DeviceCreateRequest{
 		Hostname:        host,
 		Facility:        []string{*dcf},
-		Plan:            *slugf,
+		Plan:            plan,
 		OS:              *osf,
 		ProjectID:       pid,
 		UserData:        install,
