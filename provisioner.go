@@ -38,16 +38,16 @@ var (
 )
 
 var stdPrices = map[string]float64{
-	"c3.small.x86: 0.5, // https://metal.equinix.com/product/servers/c3-small/ 8 cores @ 3.40 GHz, 32GB RAM, 960 GB SSD
-	"c3.medium.x86": 1.1, // https://metal.equinix.com/product/servers/c3-medium/ 24 cores @ 2.8 GHz, 64GB DDR4 RAM, 960 GB SSD
-	"m3.small.x86": 1.05, // name: m3.small.x86 https://metal.equinix.com/product/servers/m3-small/ 8 cores @ 2.8 GHz, 64GB RAM, 960 GB SSD
-	"m3.large.x86": 2, // https://metal.equinix.com/product/servers/m3-large/ 32 cores @ 2.5 GHz, 256GB DDR4 RAM, 2 x 3.8 TB NVMe
+	"c3.small.x86":  0.5,  // https://metal.equinix.com/product/servers/c3-small/ 8 cores @ 3.40 GHz, 32GB RAM, 960 GB SSD
+	"c3.medium.x86": 1.1,  // https://metal.equinix.com/product/servers/c3-medium/ 24 cores @ 2.8 GHz, 64GB DDR4 RAM, 960 GB SSD
+	"m3.small.x86":  1.05, // name: m3.small.x86 https://metal.equinix.com/product/servers/m3-small/ 8 cores @ 2.8 GHz, 64GB RAM, 960 GB SSD
+	"m3.large.x86":  2,    // https://metal.equinix.com/product/servers/m3-large/ 32 cores @ 2.5 GHz, 256GB DDR4 RAM, 2 x 3.8 TB NVMe
 	"s3.xlarge.x86": 1.85, // https://metal.equinix.com/product/servers/s3-xlarge/ 24 cores @ 2.2 GHz, 192GB DDR4 RAM, 1.9 TB SSD
 }
 
 func beefier(than string) []string {
 	prc := stdPrices[than]
-	ret := make([]string,0,len(stdPrices))
+	ret := make([]string, 0, len(stdPrices))
 	for k, v := range stdPrices {
 		if v > prc {
 			ret = append(ret, k)
@@ -140,25 +140,25 @@ func main() {
 			machines := beefier(machine)
 			slugs := make([]string, len(machines))
 			for _, p := range plans {
-			  for i, mach := range machines {
-		            if p.Name == mach {
-			      slugs[i] = p.Slug
-		            }
-	                  }
+				for i, mach := range machines {
+					if p.Name == mach {
+						slugs[i] = p.Slug
+					}
+				}
 			}
 			bestPrice := stdPrices[machine]
 			for idx, s := range slugs {
 				if pri[*dcf][s] < bestPrice {
-				  bestPrice = pri[*dcf][s]
-				  plan = s
-				  machine = machines[idx]
-				  *maxf = bestPrice
+					bestPrice = pri[*dcf][s]
+					plan = s
+					machine = machines[idx]
+					*maxf = bestPrice
 				}
 			}
 			// if we haven't upgraded, just get an on demand instance
-			if plan == *slugf { 
-			  spot = false
-			  *maxf = 0
+			if plan == *slugf {
+				spot = false
+				*maxf = 0
 			}
 		}
 	}
