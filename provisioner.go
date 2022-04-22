@@ -109,6 +109,7 @@ func main() {
 	for _, p := range plans {
 		if p.Slug == *slugf {
 			machine = p.Name
+			break
 		}
 	}
 	if machine == "" {
@@ -143,6 +144,7 @@ func main() {
 				for i, mach := range machines {
 					if p.Name == mach {
 						slugs[i] = p.Slug
+						break
 					}
 				}
 			}
