@@ -150,7 +150,7 @@ func main() {
 			}
 			bestPrice := stdPrices[machine]
 			for idx, s := range slugs {
-				if pri[*dcf][s] < bestPrice {
+				if pri[*dcf][s] > 0 && pri[*dcf][s] < bestPrice {
 					bestPrice = pri[*dcf][s]
 					plan = s
 					machine = machines[idx]
