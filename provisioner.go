@@ -22,10 +22,10 @@ import (
 var (
 	dumpf  = flag.Bool("dump", false, "dump config file and quit (for debugging)")
 	delf   = flag.Bool("delete", false, "delete server with host name -host")
-	dcf    = flag.String("dc", "sjc1", "packet data centre location")
+	dcf    = flag.String("dc", "sv15", "equinix metal data centre location")
 	slugf  = flag.String("slug", "c3.small.x86", "slug of machine type")
 	osf    = flag.String("os", "ubuntu_20_04", "os type")
-	pnamef = flag.String("project", "bench", "name of your packet project")
+	pnamef = flag.String("project", "bench", "name of your equinix metal project")
 	hnamef = flag.String("host", "test.server", "host name for your new server")
 	lifef  = flag.Duration("life", time.Hour, "duration before server is terminated")
 	maxf   = flag.Float64("max", 0, "maximum price per hour. Give 0 to set at the on demand price. Give -1 to force on demand instance.")

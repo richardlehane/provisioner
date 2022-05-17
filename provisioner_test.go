@@ -20,6 +20,17 @@ func setup(t *testing.T) {
 	return
 }
 
+func TestFacilities(t *testing.T) {
+	setup(t)
+	fac, _, err := testClient.Facilities.List(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, v := range fac {
+		t.Logf("code: %s; name %s\n", v.Code, v.Name)
+	}
+}
+
 func TestPlans(t *testing.T) {
 	setup(t)
 	pla, _, err := testClient.Plans.List(nil)
@@ -60,6 +71,6 @@ func TestInstall(t *testing.T) {
 }
 
 func TestThrottle(t *testing.T) {
-	err := throttle("https://www.itforarchivists.com/siegfried/develop", "div:nth-of-type(7) a", "365") 
+	err := throttle("https://www.itforarchivists.com/siegfried/develop", "div:nth-of-type(7) a", "365")
 	t.Log(err)
 }
