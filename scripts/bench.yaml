@@ -3,7 +3,7 @@ packages:
   - git
   - unzip
   - python3-pip
-  - openjdk-8-jre
+  - openjdk-11-jre
 write_files:
   - content: | 
       [Unit]
