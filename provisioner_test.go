@@ -11,7 +11,7 @@ func setup(t *testing.T) {
 	if testClient != nil {
 		return
 	}
-	testClient, err = equinix("")
+	testClient, err = cherry()
 	if err != nil {
 		t.Fatal(err)
 	}
