@@ -1,47 +1,41 @@
 package main
 
 import (
-	"errors"
 	"flag"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
-	"golang.org/x/net/html"
-
-	"github.com/andybalholm/cascadia"
-	"github.com/packethost/packngo"
 	"github.com/richardlehane/crock32"
 )
 
 var (
 	dumpf  = flag.Bool("dump", false, "dump config file and quit (for debugging)")
 	delf   = flag.Bool("delete", false, "delete server with host name -host")
-	dcf    = flag.String("dc", "sv15", "equinix metal data centre location")
-	slugf  = flag.String("slug", "m3.small.x86", "slug of machine type")
-	osf    = flag.String("os", "ubuntu_20_04", "os type")
-	pnamef = flag.String("project", "bench", "name of your equinix metal project")
-	hnamef = flag.String("host", "test.server", "host name for your new server")
+	svcf   = flag.String("service", "equinix", "metal provider")
+	dcf    = flag.String("dc", "sv15", "data centre location/ region")
+	slugf  = flag.String("slug", "m3.small.x86", "slug of machine/ plan")
+	osf    = flag.String("os", "ubuntu_22_04", "os type")
+	pnamef = flag.String("project", "bench", "project name")
+	hnamef = flag.String("host", "test.server", "server host name")
 	lifef  = flag.Duration("life", time.Hour, "duration before server is terminated")
 	maxf   = flag.Float64("max", 0, "maximum price per hour. Give 0 to set at the on demand price. Give -1 to force on demand instance.")
 	replf  = flag.String("replace", "", "comma-separated key-value pairs to replace ${KEY} strings in install")
 	envf   = flag.String("env", "", "comma-separated list of environment variables to replace ${KEY} strings in install")
 	filesf = flag.String("files", "", "comma-separated list of file names to replace ${KEY} strings in install")
-	tuf    = flag.String("tu", "", "URL of html page with a date to calculate a throttle period")
-	tsf    = flag.String("ts", "", "CSS selector for getting date in YYYY-MM-DD format to calculate a throttle period")
-	tdf    = flag.String("td", "", "number of days to add to date in order to calculate a throttle period")
 )
 
-var stdPrices = map[string]float64{
-	"c3.medium.x86": 1.5,  // https://metal.equinix.com/product/servers/c3-medium/ 24 cores @ 2.8 GHz, 64GB DDR4 RAM, 960 GB SSD
-	"m3.small.x86":  1.05, // name: m3.small.x86 https://metal.equinix.com/product/servers/m3-small/ 8 cores @ 2.8 GHz, 64GB RAM, 960 GB SSD
-	"m3.large.x86":  3.1,  // https://metal.equinix.com/product/servers/m3-large/ 32 cores @ 2.5 GHz, 256GB DDR4 RAM, 2 x 3.8 TB NVMe
-	"s3.xlarge.x86": 2.95, // https://metal.equinix.com/product/servers/s3-xlarge/ 24 cores @ 2.2 GHz, 192GB DDR4 RAM, 1.9 TB SSD
+type client interface {
+	Provision(host, plan, install string, spot bool) error
+	Delete(host string) error
+
+	// Informational
+	Facilities() ([][2]string, error)
+	Machines() ([][2]string, error)
+	Prices(dc string) (map[string]float64, error)
+	OSs() ([][2]string, error)
 }
 
 func beefier(than string) []string {
@@ -57,57 +51,24 @@ func beefier(than string) []string {
 
 func main() {
 	flag.Parse()
-	c, err := packngo.NewClient()
+	// Get a client
+	c, err := equinix(*pnamef)
 	if err != nil {
 		log.Fatal(err)
-	}
-	ps, _, err := c.Projects.List(nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var pid string
-	for _, p := range ps {
-		if *pnamef == p.Name {
-			pid = p.ID
-			break
-		}
-	}
-	if pid == "" {
-		log.Fatalf("Can't find project name %s\n", *pnamef)
 	}
 	// if we're deleting...
 	if *delf {
-		devices, _, err := c.Devices.List(pid, nil)
-		if err != nil {
-			log.Fatal(err)
-		}
-		var did string
-		for _, d := range devices {
-			if d.Hostname == *hnamef {
-				did = d.ID
-				break
-			}
-		}
-		if did == "" {
-			log.Fatalf("Can't find hostname %s in project %s\n", *hnamef, *pnamef)
-		}
-		_, err = c.Devices.Delete(did, true)
-		log.Print(err)
+		log.Print(c.Delete(*hnamef))
 		return
 	}
-	// check if a throttle period is given
-	terr := throttle(*tuf, *tsf, *tdf)
-	if terr != nil {
-		log.Fatalf("throtting: %s\n", terr)
-	}
 	var machine string
-	plans, _, err := c.Plans.List(nil)
+	plans, err := c.Machines()
 	if err != nil {
 		log.Fatal(err)
 	}
 	for _, p := range plans {
-		if p.Slug == *slugf {
-			machine = p.Name
+		if p[0] == *slugf {
+			machine = p[1]
 			break
 		}
 	}
@@ -130,27 +91,27 @@ func main() {
 		if *maxf == 0 {
 			*maxf = stdPrices[machine]
 		}
-		pri, _, err := c.SpotMarket.Prices()
+		pri, err := c.Prices(*dcf)
 		if err != nil {
 			log.Fatal(err)
 		}
 		// if we bid the std price or more, and the spot is over that, try to upgrade
-		if *maxf >= stdPrices[machine] && pri[*dcf][*slugf] >= *maxf {
+		if *maxf >= stdPrices[machine] && pri[*slugf] >= *maxf {
 			// try an upgrade
 			machines := beefier(machine)
 			slugs := make([]string, len(machines))
 			for _, p := range plans {
 				for i, mach := range machines {
-					if p.Name == mach {
-						slugs[i] = p.Slug
+					if p[1] == mach {
+						slugs[i] = p[1]
 						break
 					}
 				}
 			}
 			bestPrice := stdPrices[machine]
 			for idx, s := range slugs {
-				if pri[*dcf][s] > 0 && pri[*dcf][s] < bestPrice {
-					bestPrice = pri[*dcf][s]
+				if pri[s] > 0 && pri[s] < bestPrice {
+					bestPrice = pri[s]
 					plan = s
 					machine = machines[idx]
 					*maxf = bestPrice
@@ -170,9 +131,7 @@ func main() {
 		return
 	}
 	// provision
-	dcr := provision(pid, host, plan, install, spot)
-	_, _, err = c.Devices.Create(dcr)
-	log.Print(err)
+	log.Print(c.Provision(host, plan, install, spot))
 }
 
 func readInstall(path, host, machine string) string {
@@ -180,7 +139,7 @@ func readInstall(path, host, machine string) string {
 	if path == "" {
 		return install
 	}
-	byt, err := ioutil.ReadFile(path)
+	byt, err := os.ReadFile(path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -207,7 +166,7 @@ func readInstall(path, host, machine string) string {
 		if *filesf != "" {
 			files := strings.Split(*filesf, ",")
 			for _, k := range files {
-				byt, err := ioutil.ReadFile(k)
+				byt, err := os.ReadFile(k)
 				if err != nil {
 					log.Fatalf("Can't open file: %s", k)
 				}
@@ -228,59 +187,4 @@ func readInstall(path, host, machine string) string {
 		install = repl.Replace(install)
 	}
 	return install
-}
-
-func provision(pid, host, plan, install string, spot bool) *packngo.DeviceCreateRequest {
-	term := &packngo.Timestamp{Time: time.Now().Add(*lifef)}
-	return &packngo.DeviceCreateRequest{
-		Hostname:        host,
-		Facility:        []string{*dcf},
-		Plan:            plan,
-		OS:              *osf,
-		ProjectID:       pid,
-		UserData:        install,
-		BillingCycle:    "hourly",
-		SpotInstance:    spot,
-		SpotPriceMax:    *maxf,
-		TerminationTime: term,
-	}
-}
-
-func throttle(url, selector, duration string) error {
-	if url == "" && selector == "" && duration == "" {
-		return nil
-	}
-	if url == "" || selector == "" || duration == "" {
-		return errors.New("must give url, selector and duration values")
-	}
-	days, err := strconv.Atoi(duration)
-	if err != nil {
-		return errors.New("invalid duration")
-	}
-	sel, err := cascadia.Compile(selector)
-	if err != nil {
-		return err
-	}
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	node, err := html.Parse(resp.Body)
-	if err != nil {
-		return err
-	}
-	el := sel.MatchFirst(node)
-	if el == nil || el.FirstChild == nil || len(el.FirstChild.Data) < 10 {
-		return errors.New("selector found no node, empty node or no date")
-	}
-	t, err := time.Parse("2006-01-02", el.FirstChild.Data[:10])
-	if err != nil {
-		return err
-	}
-	next := t.AddDate(0, 0, days)
-	if time.Now().After(next) {
-		return nil
-	}
-	return errors.New("next run is " + next.String())
 }
