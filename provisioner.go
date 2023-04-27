@@ -14,7 +14,6 @@ import (
 var (
 	dumpf  = flag.Bool("dump", false, "dump config file and quit (for debugging)")
 	delf   = flag.Bool("delete", false, "delete server with host name -host")
-	svcf   = flag.String("service", "equinix", "metal provider")
 	dcf    = flag.String("dc", "sv15", "data centre location/ region")
 	slugf  = flag.String("slug", "m3.small.x86", "slug of machine/ plan")
 	osf    = flag.String("os", "ubuntu_22_04", "os type")
