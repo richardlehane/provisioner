@@ -1,5 +1,3 @@
-github.com/cherryservers/cherrygo/v3 v3.0.1 h1:TLIduwCNzdPr5nPfYht683N6MOT/ZLVKEXHlMFa4qNs=
-github.com/cherryservers/cherrygo/v3 v3.0.1/go.mod h1:FHEy2VZaG3BL78z3/E1UZXFSHU3mTRUltTeJ6T3FW3Y=
 github.com/cherryservers/cherrygo/v3 v3.1.0 h1:wQkKmHgrjt5H+ATjG/34gtfBKJMnmp5YIAvAmFuVFXc=
 github.com/cherryservers/cherrygo/v3 v3.1.0/go.mod h1:FHEy2VZaG3BL78z3/E1UZXFSHU3mTRUltTeJ6T3FW3Y=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
