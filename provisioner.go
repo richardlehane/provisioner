@@ -20,7 +20,7 @@ var (
 	osf    = flag.String("os", "ubuntu_22_04", "os type")
 	pnamef = flag.String("project", "bench", "project name")
 	hnamef = flag.String("host", "test.server", "server host name")
-	lifef  = flag.Duration("life", time.Hour, "duration before server is terminated")
+	lifef  = flag.Duration("life", time.Hour, "duration before server is terminated (doesn't work for cherry)")
 	maxf   = flag.Float64("max", 0, "maximum price per hour. Give 0 to set at the on demand price. Give -1 to force on demand instance.")
 	replf  = flag.String("replace", "", "comma-separated key-value pairs to replace ${KEY} strings in install")
 	envf   = flag.String("env", "", "comma-separated list of environment variables to replace ${KEY} strings in install")

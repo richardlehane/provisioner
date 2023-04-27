@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/cherryservers/cherrygo/v3"
@@ -14,7 +15,8 @@ var cherryPlans = stdPrices{
 }
 
 type cherryClient struct {
-	teamID int
+	teamID    int
+	projectID int
 	*cherrygo.Client
 }
 
@@ -23,20 +25,14 @@ func (cc *cherryClient) Provision(host, plan, install string, spot bool) error {
 }
 
 func (cc *cherryClient) Delete(host string) error {
-	projs, _, err := cc.Projects.List(cc.teamID, nil)
+	svrs, _, err := cc.Servers.List(cc.projectID, nil)
 	if err != nil {
 		return err
 	}
-	for _, proj := range projs {
-		svrs, _, err := cc.Servers.List(proj.ID, nil)
-		if err != nil {
+	for _, svr := range svrs {
+		if svr.Hostname == host {
+			_, _, err = cc.Servers.Delete(svr.ID)
 			return err
-		}
-		for _, svr := range svrs {
-			if svr.Hostname == host {
-				_, _, err = cc.Servers.Delete(svr.ID)
-				return err
-			}
 		}
 	}
 	return nil
@@ -111,7 +107,7 @@ func (cc *cherryClient) OSs() ([][2]string, error) {
 	return ret, nil
 }
 
-func cherry() (client, error) {
+func cherry(project string) (client, error) {
 	cc, err := cherrygo.NewClient()
 	if err != nil {
 		return nil, err
@@ -120,8 +116,18 @@ func cherry() (client, error) {
 	if err != nil || len(teams) == 0 {
 		return nil, err
 	}
-	return &cherryClient{
-		teamID: teams[0].ID,
-		Client: cc,
-	}, nil
+	projs, _, err := cc.Projects.List(teams[0].ID, nil)
+	if err != nil {
+		return nil, err
+	}
+	for _, proj := range projs {
+		if proj.Name == project {
+			return &cherryClient{
+				teamID:    teams[0].ID,
+				projectID: proj.ID,
+				Client:    cc,
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("can't find project %s", project)
 }

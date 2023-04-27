@@ -12,13 +12,14 @@ write_files:
       [Service]
       Type=oneshot
       User=root
+      Environment="CHERRY_AUTH_TOKEN=${CHERRY_AUTH_TOKEN}"
       Environment="PACKET_AUTH_TOKEN=${PACKET_AUTH_TOKEN}"
       Environment="RUNNER_MACH=${MACHINE}"
       Environment="RUNNER_AUTH=${RUNNER_AUTH}"
       Environment="RUNNER_URL=https://www.itforarchivists.com/siegfried/jobs/develop"
       Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin:/root/go/bin"
       ExecStart=/root/go/bin/runner
-      ExecStart=/root/go/bin/provisioner -delete -host=${HOST} -project=${PROJECT}
+      ExecStart=/root/go/bin/provisioner -delete -host=${HOST}
            
       [Install]
       WantedBy=default.target

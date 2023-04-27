@@ -11,7 +11,7 @@ func setup(t *testing.T) {
 	if testClient != nil {
 		return
 	}
-	testClient, err = cherry()
+	testClient, err = cherry("bench")
 	if err != nil {
 		t.Fatal(err)
 	}
