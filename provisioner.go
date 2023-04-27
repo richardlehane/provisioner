@@ -27,6 +27,10 @@ var (
 	filesf = flag.String("files", "", "comma-separated list of file names to replace ${KEY} strings in install")
 )
 
+type stdPrices map[string]float64
+
+type dcMachinePrices map[string]map[string]float64
+
 type client interface {
 	Provision(host, plan, install string, spot bool) error
 	Delete(host string) error
@@ -34,14 +38,14 @@ type client interface {
 	// Informational
 	Facilities() ([][2]string, error)
 	Machines() ([][2]string, error)
-	Prices(dc string) (map[string]float64, error)
 	OSs() ([][2]string, error)
+	Prices() (dcMachinePrices, error)
 }
 
-func beefier(than string) []string {
-	prc := stdPrices[than]
-	ret := make([]string, 0, len(stdPrices))
-	for k, v := range stdPrices {
+func beefier(than string, stdp stdPrices) []string {
+	prc := stdp[than]
+	ret := make([]string, 0, len(stdp))
+	for k, v := range stdp {
 		if v > prc {
 			ret = append(ret, k)
 		}
@@ -75,7 +79,7 @@ func main() {
 	if machine == "" {
 		log.Fatalf("Can't find slug %s in list of plans\n", *slugf)
 	}
-	if _, ok := stdPrices[machine]; !ok {
+	if _, ok := equinixPlans[machine]; !ok {
 		log.Fatalf("Don't have a price for machine type %s\n", machine)
 	}
 	host := strings.Replace(*hnamef, "RAND", crock32.PUID(), -1)
@@ -89,16 +93,16 @@ func main() {
 	} else {
 		// if max is set to 0, set it to the std on demand price
 		if *maxf == 0 {
-			*maxf = stdPrices[machine]
+			*maxf = equinixPlans[machine]
 		}
-		pri, err := c.Prices(*dcf)
+		pri, err := c.Prices()
 		if err != nil {
 			log.Fatal(err)
 		}
 		// if we bid the std price or more, and the spot is over that, try to upgrade
-		if *maxf >= stdPrices[machine] && pri[*slugf] >= *maxf {
+		if *maxf >= equinixPlans[machine] && pri["sv15"][*slugf] >= *maxf {
 			// try an upgrade
-			machines := beefier(machine)
+			machines := beefier(machine, equinixPlans)
 			slugs := make([]string, len(machines))
 			for _, p := range plans {
 				for i, mach := range machines {
@@ -108,10 +112,10 @@ func main() {
 					}
 				}
 			}
-			bestPrice := stdPrices[machine]
+			bestPrice := equinixPlans[machine]
 			for idx, s := range slugs {
-				if pri[s] > 0 && pri[s] < bestPrice {
-					bestPrice = pri[s]
+				if pri["sv15"][s] > 0 && pri["sv15"][s] < bestPrice {
+					bestPrice = pri["sv15"][s]
 					plan = s
 					machine = machines[idx]
 					*maxf = bestPrice

@@ -8,7 +8,7 @@ import (
 	"github.com/packethost/packngo"
 )
 
-var stdPrices = map[string]float64{
+var equinixPlans = stdPrices{
 	"c3.medium.x86": 1.5,  // https://metal.equinix.com/product/servers/c3-medium/ 24 cores @ 2.8 GHz, 64GB DDR4 RAM, 960 GB SSD
 	"m3.small.x86":  1.05, // name: m3.small.x86 https://metal.equinix.com/product/servers/m3-small/ 8 cores @ 2.8 GHz, 64GB RAM, 960 GB SSD
 	"m3.large.x86":  3.1,  // https://metal.equinix.com/product/servers/m3-large/ 32 cores @ 2.5 GHz, 256GB DDR4 RAM, 2 x 3.8 TB NVMe
@@ -68,16 +68,12 @@ func (ec *equinixClient) Machines() ([][2]string, error) {
 	return ret, nil
 }
 
-func (ec *equinixClient) Prices(dc string) (map[string]float64, error) {
+func (ec *equinixClient) Prices() (dcMachinePrices, error) {
 	pri, _, err := ec.SpotMarket.PricesByFacility()
 	if err != nil {
 		return nil, err
 	}
-	ret, ok := pri[dc]
-	if !ok {
-		return nil, fmt.Errorf("can't find prices for %s", dc)
-	}
-	return ret, nil
+	return dcMachinePrices(pri), nil
 }
 
 func (ec *equinixClient) OSs() ([][2]string, error) {

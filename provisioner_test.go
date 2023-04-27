@@ -42,12 +42,14 @@ func TestPlans(t *testing.T) {
 
 func TestPrices(t *testing.T) {
 	setup(t)
-	pri, err := testClient.Prices("sv15")
+	pri, err := testClient.Prices()
 	if err != nil {
 		t.Fatal(err)
 	}
 	for k, v := range pri {
-		t.Logf("%s price: %v\n", k, v)
+		for kk, vv := range v {
+			t.Logf("%s %s price: %v\n", k, kk, vv)
+		}
 	}
 }
 
