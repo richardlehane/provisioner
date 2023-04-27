@@ -23,6 +23,22 @@ func (cc *cherryClient) Provision(host, plan, install string, spot bool) error {
 }
 
 func (cc *cherryClient) Delete(host string) error {
+	projs, _, err := cc.Projects.List(cc.teamID, nil)
+	if err != nil {
+		return err
+	}
+	for _, proj := range projs {
+		svrs, _, err := cc.Servers.List(proj.ID, nil)
+		if err != nil {
+			return err
+		}
+		for _, svr := range svrs {
+			if svr.Hostname == host {
+				_, _, err = cc.Servers.Delete(svr.ID)
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -37,6 +53,7 @@ func (cc *cherryClient) Facilities() ([][2]string, error) {
 	}
 	return ret, nil
 }
+
 func (cc *cherryClient) Machines() ([][2]string, error) {
 	pla, _, err := cc.Plans.List(cc.teamID, nil)
 	if err != nil {

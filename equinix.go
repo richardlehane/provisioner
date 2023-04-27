@@ -16,8 +16,8 @@ var equinixPlans = stdPrices{
 }
 
 type equinixClient struct {
-	*packngo.Client
 	projectID string
+	*packngo.Client
 }
 
 func (ec *equinixClient) Provision(host, plan, install string, spot bool) error {
@@ -39,7 +39,7 @@ func (ec *equinixClient) Delete(host string) error {
 		}
 	}
 	if did == "" {
-		return fmt.Errorf("can't find hostname %s in project %s", host, ec.projectID)
+		return nil
 	}
 	_, err = ec.Devices.Delete(did, true)
 	return err
@@ -56,6 +56,7 @@ func (ec *equinixClient) Facilities() ([][2]string, error) {
 	}
 	return ret, nil
 }
+
 func (ec *equinixClient) Machines() ([][2]string, error) {
 	pla, _, err := ec.Plans.List(nil)
 	if err != nil {
@@ -109,7 +110,7 @@ func equinix(project string) (client, error) {
 			return nil, fmt.Errorf("can't find project name %s", project)
 		}
 	}
-	return &equinixClient{c, pid}, nil
+	return &equinixClient{pid, c}, nil
 }
 
 func provision(pid, host, plan, install string, spot bool) *packngo.DeviceCreateRequest {
