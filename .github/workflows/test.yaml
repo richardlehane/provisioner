@@ -17,4 +17,5 @@ jobs:
         run: go test -v ./...
         env:
           PACKET_AUTH_TOKEN: ${{ secrets.PACKET_AUTH_TOKEN }}
+          CHERRY_AUTH_TOKEN: ${{ secrets.CHERRY_AUTH_TOKEN }}
       
