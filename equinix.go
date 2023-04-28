@@ -8,21 +8,28 @@ import (
 	"github.com/packethost/packngo"
 )
 
-var equinixPlans = stdPrices{
-	"c3.medium.x86": 1.5,  // https://metal.equinix.com/product/servers/c3-medium/ 24 cores @ 2.8 GHz, 64GB DDR4 RAM, 960 GB SSD
-	"m3.small.x86":  1.05, // name: m3.small.x86 https://metal.equinix.com/product/servers/m3-small/ 8 cores @ 2.8 GHz, 64GB RAM, 960 GB SSD
-	"m3.large.x86":  3.1,  // https://metal.equinix.com/product/servers/m3-large/ 32 cores @ 2.5 GHz, 256GB DDR4 RAM, 2 x 3.8 TB NVMe
-	"s3.xlarge.x86": 2.95, // https://metal.equinix.com/product/servers/s3-xlarge/ 24 cores @ 2.2 GHz, 192GB DDR4 RAM, 1.9 TB SSD
-}
+var (
+	equinixMachine = "m3.small.x86"
+	equinixOS      = "ubuntu_22_04"
+	equinixDC      = "sv15"
+	equinixPlans   = stdPrices{
+		"c3.medium.x86": 1.5,  // https://metal.equinix.com/product/servers/c3-medium/ 24 cores @ 2.8 GHz, 64GB DDR4 RAM, 960 GB SSD
+		"m3.small.x86":  1.05, // name: m3.small.x86 https://metal.equinix.com/product/servers/m3-small/ 8 cores @ 2.8 GHz, 64GB RAM, 960 GB SSD
+		"m3.large.x86":  3.1,  // https://metal.equinix.com/product/servers/m3-large/ 32 cores @ 2.5 GHz, 256GB DDR4 RAM, 2 x 3.8 TB NVMe
+		"s3.xlarge.x86": 2.95, // https://metal.equinix.com/product/servers/s3-xlarge/ 24 cores @ 2.2 GHz, 192GB DDR4 RAM, 1.9 TB SSD
+	}
+)
 
 type equinixClient struct {
 	projectID string
+	dc        string
+	plan      string
+	spot      bool
 	*packngo.Client
 }
 
-func (ec *equinixClient) Provision(host, plan, install string, spot bool) error {
-	dcr := provision(ec.projectID, host, plan, install, spot)
-	_, _, err := ec.Devices.Create(dcr)
+func (ec *equinixClient) Provision(host, install string) error {
+	_, _, err := ec.Devices.Create(provision(ec.projectID, host, ec.plan, install, ec.spot))
 	return err
 }
 
@@ -44,6 +51,13 @@ func (ec *equinixClient) Delete(host string) error {
 	_, err = ec.Devices.Delete(did, true)
 	return err
 }
+func (ec *equinixClient) Arbitrage(max float64) (dc, plan string, price float64, spot bool) {
+	return "", "", 0, false
+}
+
+func (ec *equinixClient) SetDC(dc string) bool     { return false }
+func (ec *equinixClient) SetPlan(plan string) bool { return false }
+func (ec *equinixClient) SetSpot(spot bool)        {}
 
 func (ec *equinixClient) Facilities() ([][2]string, error) {
 	fac, _, err := ec.Client.Facilities.List(nil)
@@ -110,7 +124,7 @@ func equinix(project string) (client, error) {
 			return nil, fmt.Errorf("can't find project name %s", project)
 		}
 	}
-	return &equinixClient{pid, c}, nil
+	return &equinixClient{pid, "", "", false, c}, nil
 }
 
 func provision(pid, host, plan, install string, spot bool) *packngo.DeviceCreateRequest {

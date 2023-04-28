@@ -11,10 +11,15 @@ func setup(t *testing.T) {
 	if testClient != nil {
 		return
 	}
-	testClient, err = cherry("bench")
+	cClient, err := cherry("bench")
 	if err != nil {
 		t.Fatal(err)
 	}
+	eClient, err := equinix("bench")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testClient = &joint{[]client{cClient, eClient}}
 }
 
 func TestFacilities(t *testing.T) {

@@ -7,21 +7,30 @@ import (
 	"github.com/cherryservers/cherrygo/v3"
 )
 
-var cherryPlans = stdPrices{
-	"e3_1240v3":  0.188, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240v3?b=37&r=1 4 cores @ 3.4GHz, 16GB ECC DDR3 RAM, 2x SSD 250GB
-	"e3_1240v5":  0.197, // https://www.cherryservers.com/pricing/dedicated-servers/e5_1620v4?b=37&r=1 4 cores @ 3.5GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
-	"e3_1240lv5": 0.197, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240v5?b=37&r=1 4 cores @ 3.5GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
-	"e5_1620v4":  0.197, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240lv5?b=37&r=1 4 cores @ 2.1GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
-}
+var (
+	cherryMachine = "e3_1240v3"
+	cherryOS      = "ubuntu_20_04"
+	cherryDC      = "eu_nord_1"
+	cherryPlans   = stdPrices{
+		"e3_1240v3":  0.188, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240v3?b=37&r=1 4 cores @ 3.4GHz, 16GB ECC DDR3 RAM, 2x SSD 250GB
+		"e3_1240v5":  0.197, // https://www.cherryservers.com/pricing/dedicated-servers/e5_1620v4?b=37&r=1 4 cores @ 3.5GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
+		"e3_1240lv5": 0.197, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240v5?b=37&r=1 4 cores @ 3.5GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
+		"e5_1620v4":  0.197, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240lv5?b=37&r=1 4 cores @ 2.1GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
+	}
+)
 
 type cherryClient struct {
 	teamID    int
 	projectID int
+	dc        string
+	plan      string
+	spot      bool
 	*cherrygo.Client
 }
 
-func (cc *cherryClient) Provision(host, plan, install string, spot bool) error {
-	return nil
+func (cc *cherryClient) Provision(host, install string) error {
+	_, _, err := cc.Servers.Create(cc.provision())
+	return err
 }
 
 func (cc *cherryClient) Delete(host string) error {
@@ -37,6 +46,14 @@ func (cc *cherryClient) Delete(host string) error {
 	}
 	return nil
 }
+
+func (cc *cherryClient) Arbitrage(max float64) (dc, plan string, price float64, spot bool) {
+	return "", "", 0, false
+}
+
+func (cc *cherryClient) SetDC(dc string) bool     { return false }
+func (cc *cherryClient) SetPlan(plan string) bool { return false }
+func (cc *cherryClient) SetSpot(spot bool)        {}
 
 func (cc *cherryClient) Facilities() ([][2]string, error) {
 	fac, _, err := cc.Regions.List(nil)
@@ -130,4 +147,16 @@ func cherry(project string) (client, error) {
 		}
 	}
 	return nil, fmt.Errorf("can't find project %s", project)
+}
+
+func (cc *cherryClient) provision() *cherrygo.CreateServer {
+	return &cherrygo.CreateServer{
+		ProjectID:    cc.projectID,
+		Plan:         "", //plan slug
+		Hostname:     "",
+		Image:        "", //image slug
+		Region:       "", // region slug
+		UserData:     "",
+		SpotInstance: false,
+	}
 }
