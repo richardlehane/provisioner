@@ -2,16 +2,14 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/cherryservers/cherrygo/v3"
 )
 
 var (
-	cherryMachine = "e3_1240v3"
-	cherryOS      = "ubuntu_20_04"
-	cherryDC      = "eu_nord_1"
-	cherryPlans   = stdPrices{
+	cherryOS    = "ubuntu_20_04"
+	cherryDC    = "eu_nord_1" // default region
+	cherryPlans = stdPrices{
 		"e3_1240v3":  0.188, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240v3?b=37&r=1 4 cores @ 3.4GHz, 16GB ECC DDR3 RAM, 2x SSD 250GB
 		"e3_1240v5":  0.197, // https://www.cherryservers.com/pricing/dedicated-servers/e5_1620v4?b=37&r=1 4 cores @ 3.5GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
 		"e3_1240lv5": 0.197, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240v5?b=37&r=1 4 cores @ 3.5GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
@@ -22,14 +20,11 @@ var (
 type cherryClient struct {
 	teamID    int
 	projectID int
-	dc        string
-	plan      string
-	spot      bool
 	*cherrygo.Client
 }
 
-func (cc *cherryClient) Provision(host, install string) error {
-	_, _, err := cc.Servers.Create(cc.provision())
+func (cc *cherryClient) Provision(host, install, dc, plan string, price float64, spot bool) error {
+	_, _, err := cc.Servers.Create(cc.provision(plan, host, dc, install, spot))
 	return err
 }
 
@@ -46,14 +41,6 @@ func (cc *cherryClient) Delete(host string) error {
 	}
 	return nil
 }
-
-func (cc *cherryClient) Arbitrage(max float64) (dc, plan string, price float64, spot bool) {
-	return "", "", 0, false
-}
-
-func (cc *cherryClient) SetDC(dc string) bool     { return false }
-func (cc *cherryClient) SetPlan(plan string) bool { return false }
-func (cc *cherryClient) SetSpot(spot bool)        {}
 
 func (cc *cherryClient) Facilities() ([][2]string, error) {
 	fac, _, err := cc.Regions.List(nil)
@@ -90,17 +77,28 @@ func (cc *cherryClient) Prices() (dcMachinePrices, error) {
 			continue
 		}
 		for _, reg := range plan.AvailableRegions {
-			//if reg.SpotQty < 1 {
-			//	continue
-			//}
+			if reg.SpotQty < 1 && reg.StockQty < 1 {
+				continue
+			}
 			if _, ok := ret[reg.Slug]; !ok {
 				ret[reg.Slug] = make(map[string]float64)
 			}
-			for idx, pri := range plan.Pricing {
-				if idx == 0 {
-					ret[reg.Slug][plan.Slug] = float64(pri.Price)
+		outer:
+			for _, pri := range plan.Pricing {
+				switch pri.Unit {
+				case "Spot hourly":
+					if reg.SpotQty > 0 {
+						ret[reg.Slug][plan.Slug] = float64(pri.Price)
+						break outer
+					}
+				case "Hourly":
+					if reg.SpotQty < 1 {
+						ret[reg.Slug][plan.Slug] = 0 - float64(pri.Price)
+						break outer
+					}
+				default:
+					continue outer
 				}
-				log.Printf("price: %v, taxed %v, currency: %s, unit: %s", pri.Price, pri.Taxed, pri.Currency, pri.Unit)
 			}
 		}
 	}
@@ -149,14 +147,14 @@ func cherry(project string) (client, error) {
 	return nil, fmt.Errorf("can't find project %s", project)
 }
 
-func (cc *cherryClient) provision() *cherrygo.CreateServer {
+func (cc *cherryClient) provision(plan, host, dc, install string, spot bool) *cherrygo.CreateServer {
 	return &cherrygo.CreateServer{
 		ProjectID:    cc.projectID,
-		Plan:         "", //plan slug
-		Hostname:     "",
-		Image:        "", //image slug
-		Region:       "", // region slug
-		UserData:     "",
-		SpotInstance: false,
+		Plan:         plan, //plan slug
+		Hostname:     host,
+		Image:        cherryOS, //image slug
+		Region:       dc,       // region slug
+		UserData:     install,
+		SpotInstance: spot,
 	}
 }

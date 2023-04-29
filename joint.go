@@ -4,46 +4,21 @@ type joint struct {
 	clients []client
 }
 
-func (j *joint) Provision(host, install string) error { return nil }
-func (j *joint) Delete(host string) error             { return nil }
+func joinStd(a, b stdPrices) stdPrices {
+	ret := make(stdPrices)
+	for k, v := range a {
+		ret[k] = v
+	}
+	for k, v := range b {
+		ret[k] = v
+	}
+	return ret
+}
+
+func (j *joint) Provision(host, install, dc, plan string, price float64, spot bool) error { return nil }
+func (j *joint) Delete(host string) error                                                 { return nil }
 func (j *joint) Arbitrage(max float64) (string, string, float64, bool) {
 	return "", "", 0, false
-}
-
-func (j *joint) SetDC(dc string) bool {
-	found := -1
-	for i, c := range j.clients {
-		if c.SetDC(dc) {
-			found = i
-			break
-		}
-	}
-	if found < 0 {
-		return false
-	}
-	j.clients = []client{j.clients[found]}
-	return true
-}
-
-func (j *joint) SetPlan(plan string) bool {
-	found := -1
-	for i, c := range j.clients {
-		if c.SetPlan(plan) {
-			found = i
-			break
-		}
-	}
-	if found < 0 {
-		return false
-	}
-	j.clients = []client{j.clients[found]}
-	return true
-}
-
-func (j *joint) SetSpot(spot bool) {
-	for i := range j.clients {
-		j.clients[i].SetSpot(spot)
-	}
 }
 
 func (j *joint) Facilities() ([][2]string, error) {
