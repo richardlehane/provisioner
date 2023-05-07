@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type joint struct {
 	clients []client
 }
@@ -15,10 +17,37 @@ func joinStd(a, b stdPrices) stdPrices {
 	return ret
 }
 
-func (j *joint) Provision(host, install, dc, plan string, price float64, spot bool) error { return nil }
-func (j *joint) Delete(host string) error                                                 { return nil }
-func (j *joint) Arbitrage(max float64) (string, string, float64, bool) {
-	return "", "", 0, false
+func checkPlan(c client, p string) bool {
+	plans, err := c.Machines()
+	if err != nil {
+		return false
+	}
+	for _, plan := range plans {
+		if plan[0] == p {
+			return true
+		}
+	}
+	return false
+}
+
+func (j *joint) Provision(host, install, dc, plan string, price float64, spot bool) error {
+	for _, c := range j.clients {
+		if checkPlan(c, plan) {
+			return c.Provision(host, install, dc, plan, price, spot)
+		}
+	}
+	return fmt.Errorf("can't find plan %s", plan)
+}
+
+func (j *joint) Delete(host string) error { // return err if found, otherwise return the last not found error
+	var err error
+	for _, c := range j.clients {
+		err = c.Delete(host)
+		if err == nil {
+			return nil
+		}
+	}
+	return err
 }
 
 func (j *joint) Facilities() ([][2]string, error) {

@@ -21,7 +21,7 @@ var (
 	pnamef = flag.String("project", "bench", "project name")
 	hnamef = flag.String("host", "test.server", "server host name")
 	lifef  = flag.Duration("life", time.Hour, "duration before server is terminated (doesn't work for cherry)")
-	maxf   = flag.Float64("max", 0, "maximum price per hour. If positive, best spot instance up to the price will be selected. If 0, on demand price for -slug. If negative, cheapest spot instance below the abs price.")
+	maxf   = flag.Float64("max", 0.15, "maximum price per hour. If positive, best spot instance up to the price will be selected. If 0, on demand price for -slug. If negative, cheapest spot instance below the abs price.")
 	replf  = flag.String("replace", "", "comma-separated key-value pairs to replace ${KEY} strings in install")
 	envf   = flag.String("env", "", "comma-separated list of environment variables to replace ${KEY} strings in install")
 	filesf = flag.String("files", "", "comma-separated list of file names to replace ${KEY} strings in install")
@@ -39,19 +39,6 @@ type client interface {
 	Machines() ([][2]string, error)
 	OSs() ([][2]string, error)
 	Prices() (dcMachinePrices, error)
-}
-
-func checkPlan(c client, p string) bool {
-	plans, err := c.Machines()
-	if err != nil {
-		return false
-	}
-	for _, plan := range plans {
-		if plan[0] == p {
-			return true
-		}
-	}
-	return false
 }
 
 func main() {

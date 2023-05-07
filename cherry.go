@@ -19,13 +19,22 @@ var (
 )
 
 type cherryClient struct {
-	teamID    int
-	projectID int
+	teamID     int
+	projectID  int
+	facilities [][2]string
+	machines   [][2]string
+	prices     dcMachinePrices
 	*cherrygo.Client
 }
 
 func (cc *cherryClient) Provision(host, install, dc, plan string, price float64, spot bool) error {
-	_, _, err := cc.Servers.Create(cc.provision(plan, host, dc, install, spot))
+	var os string
+	if *osf != "" {
+		os = *osf
+	} else {
+		os = cherryOS
+	}
+	_, _, err := cc.Servers.Create(cc.provision(plan, os, host, dc, install, spot))
 	return err
 }
 
@@ -44,10 +53,13 @@ func (cc *cherryClient) Delete(host string) error {
 			return err
 		}
 	}
-	return nil
+	return fmt.Errorf("host not found: %s", host)
 }
 
 func (cc *cherryClient) Facilities() ([][2]string, error) {
+	if cc.facilities != nil {
+		return cc.facilities, nil
+	}
 	fac, _, err := cc.Regions.List(nil)
 	if err != nil {
 		return nil, err
@@ -56,10 +68,14 @@ func (cc *cherryClient) Facilities() ([][2]string, error) {
 	for idx, v := range fac {
 		ret[idx][0], ret[idx][1] = v.Slug, v.Name
 	}
+	cc.facilities = ret
 	return ret, nil
 }
 
 func (cc *cherryClient) Machines() ([][2]string, error) {
+	if cc.machines != nil {
+		return cc.machines, nil
+	}
 	pla, _, err := cc.Plans.List(cc.teamID, nil)
 	if err != nil {
 		return nil, err
@@ -68,10 +84,14 @@ func (cc *cherryClient) Machines() ([][2]string, error) {
 	for idx, v := range pla {
 		ret[idx][0], ret[idx][1] = v.Slug, v.Name
 	}
+	ret = cc.machines
 	return ret, nil
 }
 
 func (cc *cherryClient) Prices() (dcMachinePrices, error) {
+	if cc.prices != nil {
+		return cc.prices, nil
+	}
 	pla, _, err := cc.Plans.List(cc.teamID, nil)
 	if err != nil {
 		return nil, err
@@ -107,6 +127,7 @@ func (cc *cherryClient) Prices() (dcMachinePrices, error) {
 			}
 		}
 	}
+	cc.prices = ret
 	return ret, nil
 }
 
@@ -152,13 +173,13 @@ func cherry(project string) (client, error) {
 	return nil, fmt.Errorf("can't find project %s", project)
 }
 
-func (cc *cherryClient) provision(plan, host, dc, install string, spot bool) *cherrygo.CreateServer {
+func (cc *cherryClient) provision(plan, os, host, dc, install string, spot bool) *cherrygo.CreateServer {
 	return &cherrygo.CreateServer{
 		ProjectID:    cc.projectID,
 		Plan:         plan, //plan slug
 		Hostname:     host,
-		Image:        cherryOS, //image slug
-		Region:       dc,       // region slug
+		Image:        os, //image slug
+		Region:       dc, // region slug
 		UserData:     install,
 		SpotInstance: spot,
 	}

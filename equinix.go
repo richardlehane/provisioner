@@ -20,12 +20,21 @@ var (
 )
 
 type equinixClient struct {
-	projectID string
+	projectID  string
+	facilities [][2]string
+	machines   [][2]string
+	prices     dcMachinePrices
 	*packngo.Client
 }
 
 func (ec *equinixClient) Provision(host, install, dc, plan string, price float64, spot bool) error {
-	_, _, err := ec.Devices.Create(provision(ec.projectID, dc, plan, equinixOS, host, install, spot, price))
+	var os string
+	if *osf != "" {
+		os = *osf
+	} else {
+		os = equinixOS
+	}
+	_, _, err := ec.Devices.Create(provision(ec.projectID, dc, plan, os, host, install, spot, price))
 	return err
 }
 
@@ -42,7 +51,7 @@ func (ec *equinixClient) Delete(host string) error {
 		}
 	}
 	if did == "" {
-		return nil
+		return fmt.Errorf("host not found: %s", host)
 	}
 	if *dryf {
 		log.Printf("dry run: deleting %s from equinix", host)
@@ -53,6 +62,9 @@ func (ec *equinixClient) Delete(host string) error {
 }
 
 func (ec *equinixClient) Facilities() ([][2]string, error) {
+	if ec.facilities != nil {
+		return ec.facilities, nil
+	}
 	fac, _, err := ec.Client.Facilities.List(nil)
 	if err != nil {
 		return nil, err
@@ -61,10 +73,14 @@ func (ec *equinixClient) Facilities() ([][2]string, error) {
 	for idx, v := range fac {
 		ret[idx][0], ret[idx][1] = v.Code, v.Name
 	}
+	ec.facilities = ret
 	return ret, nil
 }
 
 func (ec *equinixClient) Machines() ([][2]string, error) {
+	if ec.machines != nil {
+		return ec.machines, nil
+	}
 	pla, _, err := ec.Plans.List(nil)
 	if err != nil {
 		return nil, err
@@ -73,15 +89,21 @@ func (ec *equinixClient) Machines() ([][2]string, error) {
 	for idx, v := range pla {
 		ret[idx][0], ret[idx][1] = v.Slug, v.Name
 	}
+	ec.machines = ret
 	return ret, nil
 }
 
 func (ec *equinixClient) Prices() (dcMachinePrices, error) {
+	if ec.prices != nil {
+		return ec.prices, nil
+	}
 	pri, _, err := ec.SpotMarket.PricesByFacility()
 	if err != nil {
 		return nil, err
 	}
-	return filterPlans(dcMachinePrices(pri), listPlans(equinixPlans)), nil
+	ret := filterPlans(dcMachinePrices(pri), listPlans(equinixPlans))
+	ec.prices = ret
+	return ret, nil
 }
 
 func (ec *equinixClient) OSs() ([][2]string, error) {
@@ -117,7 +139,10 @@ func equinix(project string) (client, error) {
 			return nil, fmt.Errorf("can't find project name %s", project)
 		}
 	}
-	return &equinixClient{pid, c}, nil
+	return &equinixClient{
+		projectID: pid,
+		Client:    c,
+	}, nil
 }
 
 func provision(pid, dc, plan, os, host, install string, spot bool, pri float64) *packngo.DeviceCreateRequest {
