@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/cherryservers/cherrygo/v3"
 )
@@ -35,6 +36,10 @@ func (cc *cherryClient) Delete(host string) error {
 	}
 	for _, svr := range svrs {
 		if svr.Hostname == host {
+			if *dryf {
+				log.Printf("dry run: deleting %s from cherry", host)
+				return nil
+			}
 			_, _, err = cc.Servers.Delete(svr.ID)
 			return err
 		}

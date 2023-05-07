@@ -44,6 +44,10 @@ func (ec *equinixClient) Delete(host string) error {
 	if did == "" {
 		return nil
 	}
+	if *dryf {
+		log.Printf("dry run: deleting %s from equinix", host)
+		return nil
+	}
 	_, err = ec.Devices.Delete(did, true)
 	return err
 }

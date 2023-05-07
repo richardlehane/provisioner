@@ -108,6 +108,11 @@ func main() {
 		log.Print(install)
 		return
 	}
+	// dry run
+	if *dryf {
+		log.Printf("dry run: provisioning...\nhost: %s\ndc: %s\nmachine: %s\nprice: %v\nspot: %v\n\ninstall: \n%s", host, dc, machine, pri, spot, install)
+		return
+	}
 	// provision
 	log.Print(c.Provision(host, install, dc, machine, pri, spot))
 }
