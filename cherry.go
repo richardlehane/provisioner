@@ -110,7 +110,7 @@ func (cc *cherryClient) Prices() (dcMachinePrices, error) {
 			}
 		outer:
 			for _, pri := range plan.Pricing {
-				if pri.Currency != "USD" {
+				if pri.Currency != "USD" { // this is a sanity check that should fail as prices on account set as USD
 					continue
 				}
 				switch pri.Unit {
