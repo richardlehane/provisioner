@@ -80,7 +80,10 @@ func main() {
 	}
 	// if we're deleting...
 	if *delf {
-		log.Print(c.Delete(*hnamef))
+		if err := c.Delete(*hnamef); err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("deleted host %s", *hnamef)
 		return
 	}
 	// arbitrage
@@ -101,7 +104,10 @@ func main() {
 		return
 	}
 	// provision
-	log.Print(c.Provision(host, install, dc, machine, pri, spot))
+	if err := c.Provision(host, install, dc, machine, pri, spot); err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("provisioned...\nhost: %s\ndc: %s\nmachine: %s\nprice: %v\nspot: %v\n", host, dc, machine, pri, spot)
 }
 
 func readInstall(path, host, machine string) string {
