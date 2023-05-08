@@ -11,10 +11,10 @@ var (
 	cherryOS    = "ubuntu_20_04"
 	cherryDC    = "eu_nord_1" // default region
 	cherryPlans = stdPrices{  // prices in USD
-		"e3_1240v3":  0.204, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240v3?b=37&r=1 4 cores @ 3.4GHz, 16GB ECC DDR3 RAM, 2x SSD 250GB
-		"e3_1240v5":  0.213, // https://www.cherryservers.com/pricing/dedicated-servers/e5_1620v4?b=37&r=1 4 cores @ 3.5GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
-		"e3_1240lv5": 0.213, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240v5?b=37&r=1 4 cores @ 3.5GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
-		"e5_1620v4":  0.213, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240lv5?b=37&r=1 4 cores @ 2.1GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
+		"e3_1240v3":  0.244, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240v3?b=37&r=1 4 cores @ 3.4GHz, 16GB ECC DDR3 RAM, 2x SSD 250GB
+		"e3_1240v5":  0.255, // https://www.cherryservers.com/pricing/dedicated-servers/e5_1620v4?b=37&r=1 4 cores @ 3.5GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
+		"e3_1240lv5": 0.255, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240v5?b=37&r=1 4 cores @ 3.5GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
+		"e5_1620v4":  0.255, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240lv5?b=37&r=1 4 cores @ 2.1GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
 	}
 )
 
