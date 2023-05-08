@@ -27,9 +27,9 @@ var (
 	filesf = flag.String("files", "", "comma-separated list of file names to replace ${KEY} strings in install")
 )
 
-type stdPrices map[string]float64
+type stdPrices map[string]float64 // machine[standard hourly price in USD]
 
-type dcMachinePrices map[string]map[string]float64
+type dcMachinePrices map[string]map[string]float64 //region[machine[price (positive for spot, negative for standard)]]
 
 type client interface {
 	Provision(host, install, dc, plan string, price float64, spot bool) error
