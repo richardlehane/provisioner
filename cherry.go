@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"log"
 
@@ -183,7 +184,7 @@ func (cc *cherryClient) provision(plan, os, host, dc, install string, spot bool)
 		Hostname:     host,
 		Image:        os, //image slug
 		Region:       dc, // region slug
-		UserData:     install,
+		UserData:     base64.StdEncoding.EncodeToString([]byte(install)),
 		SpotInstance: spot,
 	}
 }
