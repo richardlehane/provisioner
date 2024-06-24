@@ -41,7 +41,7 @@ runcmd:
   - "export HOME=/root"
   - "curl https://rclone.org/install.sh | /bin/bash -s"
   - "rclone config file"
-  - 'eval "$(curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | GIMME_GO_VERSION=stable bash)"'
+  - "snap install go --classic"
   - "go install github.com/richardlehane/runner/cmd/runner@latest"
   - "go install github.com/richardlehane/provisioner@latest"
   - "cd /root/go/src"
