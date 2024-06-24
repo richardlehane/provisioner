@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"math"
 )
@@ -82,7 +83,7 @@ func arbitrage(c client, std stdPrices, max float32) (region string, plan string
 		for reg, m := range pri {
 			for pla, p := range m {
 				n := float32(math.Abs(float64(p)))
-				if (n <= max && curr == 0) || n < curr {
+				if curr == 0 || n < curr {
 					region = reg
 					plan = pla
 					price = n
@@ -92,7 +93,7 @@ func arbitrage(c client, std stdPrices, max float32) (region string, plan string
 			}
 		}
 		if curr == 0 {
-			err = fmt.Errorf("no prices found cheaper than max %v", max)
+			err = errors.New("no prices found")
 		}
 		return
 	}

@@ -184,7 +184,7 @@ func (ec *equinixClient) Prices() (dcMachinePrices, error) {
 			}
 		}
 	}
-	ec.prices = dcmpri //filterPlans(dcmpri, listPlans(equinixPlans))
+	ec.prices = filterPlans(dcmpri, listPlans(equinixPlans))
 	return ec.prices, nil
 }
 

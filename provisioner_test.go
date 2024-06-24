@@ -69,7 +69,7 @@ func TestPlans(t *testing.T) {
 }
 
 func TestPrices(t *testing.T) {
-	setup(t, JOINT)
+	setup(t, METAL)
 	pri, err := testClient.Prices()
 	if err != nil {
 		t.Fatal(err)
@@ -79,6 +79,7 @@ func TestPrices(t *testing.T) {
 			t.Logf("%s %s price: %v\n", k, kk, vv)
 		}
 	}
+	t.Fail()
 }
 
 func TestOSes(t *testing.T) {
