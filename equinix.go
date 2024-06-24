@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	metal "github.com/equinix/equinix-sdk-go/services/metalv1"
@@ -15,6 +16,7 @@ var (
 	equinixMetro = "sv"
 	equinixPlans = stdPrices{
 		"c3.small.x86":  0.75, // https://deploy.equinix.com/product/servers/c3-small/ 8 cores @ 3.40 GHz, 32GB RAM, 960 GB SSD
+		"c2.medium.x86": 1,    //24 cores @ 2.00GHz, 64 GB, 960 GB SSD
 		"c3.medium.x86": 1.5,  // https://deploy.equinix.com/product/servers/c3-medium/ 24 cores @ 2.8 GHz, 64GB DDR4 RAM, 960 GB SSD
 		"m3.small.x86":  1.05, // https://deploy.equinix.com/product/servers/m3-small/ 8 cores @ 2.8 GHz, 64GB RAM, 960 GB SSD
 		"m3.large.x86":  3.1,  // https://deploy.equinix.com/product/servers/m3-large/ 32 cores @ 2.5 GHz, 256GB DDR4 RAM, 2 x 3.8 TB NVMe
@@ -95,10 +97,47 @@ func (ec *equinixClient) Machines() ([][2]string, error) {
 	}
 	ret := make([][2]string, len(pla.Plans))
 	for idx, v := range pla.Plans {
-		ret[idx][0], ret[idx][1] = *v.Name, *v.Name
+		ret[idx][0], ret[idx][1] = *v.Slug, *v.Name
 	}
 	ec.machines = ret
 	return ret, nil
+}
+
+func (ec *equinixClient) standardPrices() (dcMachinePrices, error) {
+	metromap := make(map[string]string)
+	met, _, err := ec.MetrosApi.FindMetros(context.Background()).Execute()
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range met.Metros {
+		metromap[*m.Id] = *m.Code
+	}
+	pla, _, err := ec.PlansApi.FindPlans(context.Background()).Categories(
+		[]metal.FindOrganizationDevicesCategoriesParameterInner{metal.FINDORGANIZATIONDEVICESCATEGORIESPARAMETERINNER_COMPUTE},
+	).Type_(
+		metal.FINDPLANSTYPEPARAMETER_STANDARD,
+	).Execute()
+	if err != nil {
+		return nil, err
+	}
+	dcmp := make(dcMachinePrices)
+	for _, v := range pla.Plans {
+		slug := *v.Slug
+		for _, vv := range v.AvailableInMetros {
+			pri := vv.GetPrice()
+			hr := pri.GetHour()
+			if hr == 0 {
+				continue
+			}
+			hash := strings.Split(*vv.Href, "/")
+			metro := metromap[hash[len(hash)-1]]
+			if _, ok := dcmp[metro]; !ok {
+				dcmp[metro] = make(map[string]float32)
+			}
+			dcmp[metro][slug] = 0 - float32(hr)
+		}
+	}
+	return dcmp, nil
 }
 
 func (ec *equinixClient) Prices() (dcMachinePrices, error) {
@@ -130,7 +169,22 @@ func (ec *equinixClient) Prices() (dcMachinePrices, error) {
 			}
 		}
 	}
-	ec.prices = filterPlans(dcmpri, listPlans(equinixPlans))
+	pri2, err := ec.standardPrices()
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range pri2 {
+		if _, ok := dcmpri[k]; !ok {
+			dcmpri[k] = v
+		} else {
+			for kk, vv := range v {
+				if _, okok := dcmpri[k][kk]; !okok {
+					dcmpri[k][kk] = vv
+				}
+			}
+		}
+	}
+	ec.prices = dcmpri //filterPlans(dcmpri, listPlans(equinixPlans))
 	return ec.prices, nil
 }
 
@@ -175,9 +229,9 @@ func equinix(project string) (client, error) {
 func provision(dc, plan, os, host, install string, spot bool, pri float32) metal.CreateDeviceRequest {
 	tt := time.Now().Add(*lifef)
 	return metal.CreateDeviceRequest{
-		DeviceCreateInFacilityInput: &metal.DeviceCreateInFacilityInput{
+		DeviceCreateInMetroInput: &metal.DeviceCreateInMetroInput{
+			Metro:           dc,
 			Hostname:        &host,
-			Facility:        []string{dc},
 			Plan:            plan,
 			OperatingSystem: os,
 			Userdata:        &install,
@@ -185,5 +239,6 @@ func provision(dc, plan, os, host, install string, spot bool, pri float32) metal
 			SpotInstance:    &spot,
 			SpotPriceMax:    &pri,
 			TerminationTime: &tt,
-		}}
+		},
+	}
 }
