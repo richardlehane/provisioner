@@ -83,7 +83,10 @@ func arbitrage(c client, std stdPrices, max float32) (region string, plan string
 		for reg, m := range pri {
 			for pla, p := range m {
 				n := float32(math.Abs(float64(p)))
-				if curr == 0 || n < curr {
+				if curr == 0 || n <= curr {
+					if n == curr && reg != equinixMetro && reg != cherryDC { // prefer default dc
+						continue
+					}
 					region = reg
 					plan = pla
 					price = n
