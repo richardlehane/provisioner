@@ -100,14 +100,52 @@ func main() {
 	}
 	// dry run
 	if *dryf {
-		log.Printf("dry run: provisioning...\nhost: %s\ndc: %s\nmachine: %s\nprice: %v\nspot: %v\n\ninstall: \n%s", host, dc, machine, pri, spot, install)
+		log.Printf("dry run: provisioning...\nhost: %s\ndc: %s\nmachine: %s\nprice: %v\nspot: %v\n", host, dc, machine, pri, spot)
 		return
 	}
 	// provision
 	if err := c.Provision(host, install, dc, machine, pri, spot); err != nil {
-		log.Fatal(err)
+		log.Fatal(sanitize(err.Error()))
 	}
 	log.Printf("provisioned...\nhost: %s\ndc: %s\nmachine: %s\nprice: %v\nspot: %v\n", host, dc, machine, pri, spot)
+}
+
+func replaceStrs() []string {
+	var vals []string
+	if *replf != "" {
+		vals = strings.Split(*replf, ",")
+	}
+	if *envf != "" {
+		envs := strings.Split(*envf, ",")
+		for _, k := range envs {
+			v := os.Getenv(k)
+			if v == "" {
+				log.Fatalf("Can't find env key: %s", k)
+			}
+			vals = append(vals, k, v)
+		}
+	}
+	if *filesf != "" {
+		files := strings.Split(*filesf, ",")
+		for _, k := range files {
+			byt, err := os.ReadFile(k)
+			if err != nil {
+				log.Fatalf("Can't open file: %s", k)
+			}
+			k = filepath.Base(k)
+			vals = append(vals, k, string(byt))
+		}
+	}
+	var odd bool
+	for i, v := range vals {
+		if odd {
+			odd = false
+			continue
+		}
+		vals[i] = "${" + v + "}"
+		odd = true
+	}
+	return vals
 }
 
 func readInstall(path, host, machine string) string {
@@ -125,42 +163,33 @@ func readInstall(path, host, machine string) string {
 	install = strings.Replace(install, "${PROJECT}", *pnamef, -1)
 	install = strings.Replace(install, "${MACHINE}", machine, -1)
 	if *replf != "" || *envf != "" || *filesf != "" {
-		var vals []string
-		if *replf != "" {
-			vals = strings.Split(*replf, ",")
-		}
-		if *envf != "" {
-			envs := strings.Split(*envf, ",")
-			for _, k := range envs {
-				v := os.Getenv(k)
-				if v == "" {
-					log.Fatalf("Can't find env key: %s", k)
-				}
-				vals = append(vals, k, v)
-			}
-		}
-		if *filesf != "" {
-			files := strings.Split(*filesf, ",")
-			for _, k := range files {
-				byt, err := os.ReadFile(k)
-				if err != nil {
-					log.Fatalf("Can't open file: %s", k)
-				}
-				k = filepath.Base(k)
-				vals = append(vals, k, string(byt))
-			}
-		}
-		var odd bool
-		for i, v := range vals {
-			if odd {
-				odd = false
-				continue
-			}
-			vals[i] = "${" + v + "}"
-			odd = true
-		}
+		vals := replaceStrs()
 		repl := strings.NewReplacer(vals...)
 		install = repl.Replace(install)
 	}
 	return install
+}
+
+func sanitize(in string) string {
+	sstr := "XXXXXXX"
+	if *replf != "" || *envf != "" || *filesf != "" {
+		vals := replaceStrs()
+		if len(vals) < 2 {
+			return in
+		}
+		vals = vals[1:]
+		var odd bool
+		for i := range vals {
+			if odd {
+				odd = false
+				vals[i] = sstr
+				continue
+			}
+			odd = true
+		}
+		vals = append(vals, sstr)
+		repl := strings.NewReplacer(vals...)
+		in = repl.Replace(in)
+	}
+	return in
 }

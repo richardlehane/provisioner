@@ -96,3 +96,9 @@ func TestInstall(t *testing.T) {
 	inst := readInstall("scripts/bench.yaml", "", "")
 	t.Log(inst)
 }
+
+func TestSanitize(t *testing.T) {
+	*replf = "CHERRY_AUTH_TOKEN,fakedata"
+	inst := readInstall("scripts/bench.yaml", "", "")
+	t.Log(sanitize(inst))
+}
