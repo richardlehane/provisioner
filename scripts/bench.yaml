@@ -3,6 +3,7 @@ packages:
   - git
   - unzip
   - python3-pip
+  - pipx
   - openjdk-11-jre
 write_files:
   - content: | 
@@ -42,7 +43,7 @@ runcmd:
   - "export HOME=/root"
   - "curl https://rclone.org/install.sh | /bin/bash -s"
   - "rclone config file"
-  - 'eval "$(curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | GIMME_GO_VERSION=stable bash)"'
+  - "snap install go --classic"
   - "go install github.com/richardlehane/runner/cmd/runner@latest"
   - "go install github.com/richardlehane/provisioner@latest"
   - "cd /root/go/src"
@@ -52,10 +53,11 @@ runcmd:
   - "go install github.com/richardlehane/siegfried/cmd/roy"
   - "mkdir /root/siegfried"
   - "cp -R cmd/roy/data/. /root/siegfried"
-  - "pip install opf-fido"
+  - "pipx install opf-fido"
+  - "pipx ensure path"
   - "mkdir /tmp/droid"
   - "mkdir /root/droid"
-  - "wget -P /tmp/droid https://github.com/digital-preservation/droid/releases/download/6.7.0/droid-binary-6.7.0-bin.zip"
+  - "wget -P /tmp/droid https://github.com/digital-preservation/droid/releases/download/droid-6.7.0/droid-binary-6.7.0-bin.zip"
   - "unzip /tmp/droid/droid-binary-6.7.0-bin.zip -d /root/droid"
   - "mv /root/droid/droid.sh /root/droid/droid"
   - "chmod +x /root/droid/droid"
