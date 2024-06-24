@@ -1,52 +1,55 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
-	"github.com/packethost/packngo"
+	metal "github.com/equinix/equinix-sdk-go/services/metalv1"
 )
 
 var (
-	equinixOS    = "ubuntu_22_04"
-	equinixDC    = "sv15"
+	equinixOS    = "ubuntu_24_04"
+	equinixMetro = "sv"
 	equinixPlans = stdPrices{
-		"c3.medium.x86": 1.5,  // https://metal.equinix.com/product/servers/c3-medium/ 24 cores @ 2.8 GHz, 64GB DDR4 RAM, 960 GB SSD
-		"m3.small.x86":  1.05, // name: m3.small.x86 https://metal.equinix.com/product/servers/m3-small/ 8 cores @ 2.8 GHz, 64GB RAM, 960 GB SSD
-		"m3.large.x86":  3.1,  // https://metal.equinix.com/product/servers/m3-large/ 32 cores @ 2.5 GHz, 256GB DDR4 RAM, 2 x 3.8 TB NVMe
-		"s3.xlarge.x86": 2.95, // https://metal.equinix.com/product/servers/s3-xlarge/ 24 cores @ 2.2 GHz, 192GB DDR4 RAM, 1.9 TB SSD
+		"c3.small.x86":  0.75, // https://deploy.equinix.com/product/servers/c3-small/ 8 cores @ 3.40 GHz, 32GB RAM, 960 GB SSD
+		"c3.medium.x86": 1.5,  // https://deploy.equinix.com/product/servers/c3-medium/ 24 cores @ 2.8 GHz, 64GB DDR4 RAM, 960 GB SSD
+		"m3.small.x86":  1.05, // https://deploy.equinix.com/product/servers/m3-small/ 8 cores @ 2.8 GHz, 64GB RAM, 960 GB SSD
+		"m3.large.x86":  3.1,  // https://deploy.equinix.com/product/servers/m3-large/ 32 cores @ 2.5 GHz, 256GB DDR4 RAM, 2 x 3.8 TB NVMe
+		"s3.xlarge.x86": 2.95, // https://deploy.equinix.com/product/servers/s3-xlarge/ 24 cores @ 2.2 GHz, 192GB DDR4 RAM, 1.9 TB SSD
 	}
 )
 
 type equinixClient struct {
-	projectID  string
-	facilities [][2]string
-	machines   [][2]string
-	prices     dcMachinePrices
-	*packngo.Client
+	projectID string
+	metros    [][2]string
+	machines  [][2]string
+	prices    dcMachinePrices
+	*metal.APIClient
 }
 
-func (ec *equinixClient) Provision(host, install, dc, plan string, price float64, spot bool) error {
+func (ec *equinixClient) Provision(host, install, dc, plan string, price float32, spot bool) error {
 	var os string
 	if *osf != "" {
 		os = *osf
 	} else {
 		os = equinixOS
 	}
-	_, _, err := ec.Devices.Create(provision(ec.projectID, dc, plan, os, host, install, spot, price))
+	_, _, err := ec.DevicesApi.CreateDevice(context.Background(), ec.projectID).CreateDeviceRequest(provision(dc, plan, os, host, install, spot, price)).Execute()
 	return err
 }
 
 func (ec *equinixClient) Delete(host string) error {
-	devices, _, err := ec.Devices.List(ec.projectID, nil)
+	devices, _, err := ec.DevicesApi.FindProjectDevices(context.Background(), ec.projectID).Execute()
 	if err != nil {
 		return err
 	}
 	var did string
-	for _, d := range devices {
-		if d.Hostname == host {
-			did = d.ID
+	for _, d := range devices.Devices {
+		if *d.Hostname == host {
+			did = *d.Id
 			break
 		}
 	}
@@ -57,23 +60,24 @@ func (ec *equinixClient) Delete(host string) error {
 		log.Printf("dry run: deleting %s from equinix", host)
 		return nil
 	}
-	_, err = ec.Devices.Delete(did, true)
+	_, err = ec.DevicesApi.DeleteDevice(context.Background(), did).Execute()
 	return err
 }
 
+// Facilities really returns Metros as this is now the Equinix preference
 func (ec *equinixClient) Facilities() ([][2]string, error) {
-	if ec.facilities != nil {
-		return ec.facilities, nil
+	if ec.metros != nil {
+		return ec.metros, nil
 	}
-	fac, _, err := ec.Client.Facilities.List(nil)
+	met, _, err := ec.MetrosApi.FindMetros(context.Background()).Execute()
 	if err != nil {
 		return nil, err
 	}
-	ret := make([][2]string, len(fac))
-	for idx, v := range fac {
-		ret[idx][0], ret[idx][1] = v.Code, v.Name
+	ret := make([][2]string, len(met.Metros))
+	for idx, v := range met.Metros {
+		ret[idx][0], ret[idx][1] = *v.Code, *v.Name
 	}
-	ec.facilities = ret
+	ec.metros = ret
 	return ret, nil
 }
 
@@ -81,13 +85,17 @@ func (ec *equinixClient) Machines() ([][2]string, error) {
 	if ec.machines != nil {
 		return ec.machines, nil
 	}
-	pla, _, err := ec.Plans.List(nil)
+	pla, _, err := ec.PlansApi.FindPlans(context.Background()).Categories(
+		[]metal.FindOrganizationDevicesCategoriesParameterInner{metal.FINDORGANIZATIONDEVICESCATEGORIESPARAMETERINNER_COMPUTE},
+	).Type_(
+		metal.FINDPLANSTYPEPARAMETER_STANDARD,
+	).Execute()
 	if err != nil {
 		return nil, err
 	}
-	ret := make([][2]string, len(pla))
-	for idx, v := range pla {
-		ret[idx][0], ret[idx][1] = v.Slug, v.Name
+	ret := make([][2]string, len(pla.Plans))
+	for idx, v := range pla.Plans {
+		ret[idx][0], ret[idx][1] = *v.Name, *v.Name
 	}
 	ec.machines = ret
 	return ret, nil
@@ -97,41 +105,60 @@ func (ec *equinixClient) Prices() (dcMachinePrices, error) {
 	if ec.prices != nil {
 		return ec.prices, nil
 	}
-	pri, _, err := ec.SpotMarket.PricesByFacility()
+	pri, _, err := ec.SpotMarketApi.FindMetroSpotMarketPrices(context.Background()).Execute()
 	if err != nil {
 		return nil, err
 	}
-	ret := filterPlans(dcMachinePrices(pri), listPlans(equinixPlans))
-	ec.prices = ret
-	return ret, nil
+	m, err := pri.SpotMarketPrices.ToMap()
+	dcmpri := make(dcMachinePrices)
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range m {
+		switch sppf := v.(type) {
+		case *metal.SpotPricesPerFacility:
+			dcmpri[k] = make(map[string]float32)
+			mm, err := sppf.ToMap()
+			if err != nil {
+				return nil, err
+			}
+			for kk, vv := range mm {
+				switch sppb := vv.(type) {
+				case *metal.SpotPricesPerBaremetal:
+					dcmpri[k][kk] = *sppb.Price
+				}
+			}
+		}
+	}
+	ec.prices = filterPlans(dcmpri, listPlans(equinixPlans))
+	return ec.prices, nil
 }
 
 func (ec *equinixClient) OSs() ([][2]string, error) {
-	oss, _, err := ec.OperatingSystems.List()
+	oss, _, err := ec.OperatingSystemsApi.FindOperatingSystems(context.Background()).Execute()
 	if err != nil {
 		return nil, err
 	}
-	ret := make([][2]string, len(oss))
-	for idx, os := range oss {
-		ret[idx][0], ret[idx][1] = os.Slug, fmt.Sprintf("%s / %s / %s", os.Distro, os.Name, os.Version)
+	ret := make([][2]string, len(oss.OperatingSystems))
+	for idx, os := range oss.OperatingSystems {
+		ret[idx][0], ret[idx][1] = *os.Slug, fmt.Sprintf("%s / %s / %s", *os.Distro, *os.Name, *os.Version)
 	}
 	return ret, nil
 }
 
 func equinix(project string) (client, error) {
-	c, err := packngo.NewClient()
-	if err != nil {
-		log.Fatal(err)
-	}
+	configuration := metal.NewConfiguration()
+	configuration.AddDefaultHeader("X-Auth-Token", os.Getenv("PACKET_AUTH_TOKEN"))
+	api_client := metal.NewAPIClient(configuration)
 	var pid string
 	if project != "" {
-		ps, _, err := c.Projects.List(nil)
+		ps, _, err := api_client.ProjectsApi.FindProjects(context.Background()).Execute()
 		if err != nil {
 			log.Fatal(err)
 		}
-		for _, p := range ps {
-			if project == p.Name {
-				pid = p.ID
+		for _, p := range ps.Projects {
+			if project == *p.Name {
+				pid = *p.Id
 				break
 			}
 		}
@@ -141,22 +168,22 @@ func equinix(project string) (client, error) {
 	}
 	return &equinixClient{
 		projectID: pid,
-		Client:    c,
+		APIClient: api_client,
 	}, nil
 }
 
-func provision(pid, dc, plan, os, host, install string, spot bool, pri float64) *packngo.DeviceCreateRequest {
-	term := &packngo.Timestamp{Time: time.Now().Add(*lifef)}
-	return &packngo.DeviceCreateRequest{
-		Hostname:        host,
-		Facility:        []string{dc},
-		Plan:            plan,
-		OS:              os,
-		ProjectID:       pid,
-		UserData:        install,
-		BillingCycle:    "hourly",
-		SpotInstance:    spot,
-		SpotPriceMax:    pri,
-		TerminationTime: term,
-	}
+func provision(dc, plan, os, host, install string, spot bool, pri float32) metal.CreateDeviceRequest {
+	tt := time.Now().Add(*lifef)
+	return metal.CreateDeviceRequest{
+		DeviceCreateInFacilityInput: &metal.DeviceCreateInFacilityInput{
+			Hostname:        &host,
+			Facility:        []string{dc},
+			Plan:            plan,
+			OperatingSystem: os,
+			Userdata:        &install,
+			BillingCycle:    metal.DEVICECREATEINPUTBILLINGCYCLE_HOURLY.Ptr(),
+			SpotInstance:    &spot,
+			SpotPriceMax:    &pri,
+			TerminationTime: &tt,
+		}}
 }

@@ -1,27 +1,52 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
 var testClient client
+var thisService service
 
-func setup(t *testing.T) {
+type service int
+
+const (
+	JOINT service = iota
+	METAL
+	CHERRY
+)
+
+func setup(t *testing.T, s service) {
 	var err error
-	if testClient != nil {
+	if testClient != nil && thisService == s {
 		return
 	}
-	cClient, err := cherry("bench")
-	if err != nil {
-		t.Fatal(err)
+	thisService = s
+	switch s {
+	case JOINT:
+		cClient, err := cherry("bench")
+		if err != nil {
+			t.Fatal(err)
+		}
+		eClient, err := equinix("bench")
+		if err != nil {
+			t.Fatal(err)
+		}
+		testClient = &joint{[]client{cClient, eClient}}
+	case METAL:
+		testClient, err = equinix("bench")
+		if err != nil {
+			t.Fatal(err)
+		}
+	case CHERRY:
+		testClient, err = cherry("bench")
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-	eClient, err := equinix("bench")
-	if err != nil {
-		t.Fatal(err)
-	}
-	testClient = &joint{[]client{cClient, eClient}}
 }
 
 func TestFacilities(t *testing.T) {
-	setup(t)
+	setup(t, JOINT)
 	fac, err := testClient.Facilities()
 	if err != nil {
 		t.Fatal(err)
@@ -32,7 +57,7 @@ func TestFacilities(t *testing.T) {
 }
 
 func TestPlans(t *testing.T) {
-	setup(t)
+	setup(t, JOINT)
 	pla, err := testClient.Machines()
 	if err != nil {
 		t.Fatal(err)
@@ -44,7 +69,7 @@ func TestPlans(t *testing.T) {
 }
 
 func TestPrices(t *testing.T) {
-	setup(t)
+	setup(t, JOINT)
 	pri, err := testClient.Prices()
 	if err != nil {
 		t.Fatal(err)
@@ -57,7 +82,7 @@ func TestPrices(t *testing.T) {
 }
 
 func TestOSes(t *testing.T) {
-	setup(t)
+	setup(t, JOINT)
 	oss, err := testClient.OSs()
 	if err != nil {
 		t.Fatal(err)

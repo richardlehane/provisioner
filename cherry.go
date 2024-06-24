@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	cherryOS    = "ubuntu_20_04"
+	cherryOS    = "ubuntu_24_04_64bit"
 	cherryDC    = "eu_nord_1" // default region
-	cherryPlans = stdPrices{  // prices in USD
+	cherryPlans = stdPrices{  // prices in USD // LAST I CHECKED ALL CHERRY DEDICATED SERVERS OUT OF STOCK - SO NO PRICES
 		"e3_1240v3":  0.244, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240v3?b=37&r=1 4 cores @ 3.4GHz, 16GB ECC DDR3 RAM, 2x SSD 250GB
 		"e3_1240v5":  0.255, // https://www.cherryservers.com/pricing/dedicated-servers/e5_1620v4?b=37&r=1 4 cores @ 3.5GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
 		"e3_1240lv5": 0.255, // https://www.cherryservers.com/pricing/dedicated-servers/e3_1240v5?b=37&r=1 4 cores @ 3.5GHz, 32GB ECC DDR4 RAM, 2x SSD 250GB
@@ -28,7 +28,7 @@ type cherryClient struct {
 	*cherrygo.Client
 }
 
-func (cc *cherryClient) Provision(host, install, dc, plan string, price float64, spot bool) error {
+func (cc *cherryClient) Provision(host, install, dc, plan string, price float32, spot bool) error {
 	var os string
 	if *osf != "" {
 		os = *osf
@@ -74,10 +74,10 @@ func (cc *cherryClient) Facilities() ([][2]string, error) {
 }
 
 func (cc *cherryClient) Machines() ([][2]string, error) {
-	if cc.machines != nil {
+	if len(cc.machines) != 0 {
 		return cc.machines, nil
 	}
-	pla, _, err := cc.Plans.List(cc.teamID, nil)
+	pla, _, err := cc.Plans.List(0, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (cc *cherryClient) Machines() ([][2]string, error) {
 	for idx, v := range pla {
 		ret[idx][0], ret[idx][1] = v.Slug, v.Name
 	}
-	ret = cc.machines
+	cc.machines = ret
 	return ret, nil
 }
 
@@ -93,7 +93,7 @@ func (cc *cherryClient) Prices() (dcMachinePrices, error) {
 	if cc.prices != nil {
 		return cc.prices, nil
 	}
-	pla, _, err := cc.Plans.List(cc.teamID, nil)
+	pla, _, err := cc.Plans.List(0, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (cc *cherryClient) Prices() (dcMachinePrices, error) {
 				continue
 			}
 			if _, ok := ret[reg.Slug]; !ok {
-				ret[reg.Slug] = make(map[string]float64)
+				ret[reg.Slug] = make(map[string]float32)
 			}
 		outer:
 			for _, pri := range plan.Pricing {
@@ -117,12 +117,12 @@ func (cc *cherryClient) Prices() (dcMachinePrices, error) {
 				switch pri.Unit {
 				case "Spot hourly":
 					if reg.SpotQty > 0 {
-						ret[reg.Slug][plan.Slug] = float64(pri.Price)
+						ret[reg.Slug][plan.Slug] = pri.Price
 						break outer
 					}
 				case "Hourly":
 					if reg.SpotQty < 1 {
-						ret[reg.Slug][plan.Slug] = 0 - float64(pri.Price)
+						ret[reg.Slug][plan.Slug] = 0 - pri.Price
 						break outer
 					}
 				default:

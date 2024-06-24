@@ -30,7 +30,7 @@ func checkPlan(c client, p string) bool {
 	return false
 }
 
-func (j *joint) Provision(host, install, dc, plan string, price float64, spot bool) error {
+func (j *joint) Provision(host, install, dc, plan string, price float32, spot bool) error {
 	for _, c := range j.clients {
 		if checkPlan(c, plan) {
 			return c.Provision(host, install, dc, plan, price, spot)
@@ -57,9 +57,7 @@ func (j *joint) Facilities() ([][2]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		for _, f := range fac {
-			ret = append(ret, f)
-		}
+		ret = append(ret, fac...)
 	}
 	return ret, nil
 }
@@ -70,9 +68,7 @@ func (j *joint) Machines() ([][2]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		for _, m := range mac {
-			ret = append(ret, m)
-		}
+		ret = append(ret, mac...)
 	}
 	return ret, nil
 }
@@ -83,9 +79,7 @@ func (j *joint) OSs() ([][2]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		for _, o := range os {
-			ret = append(ret, o)
-		}
+		ret = append(ret, os...)
 	}
 	return ret, nil
 }

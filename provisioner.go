@@ -15,7 +15,7 @@ var (
 	dumpf  = flag.Bool("dump", false, "dump config file and quit (for debugging)")
 	delf   = flag.Bool("delete", false, "delete server with host name -host")
 	dryf   = flag.Bool("dry", false, "do a dry run of a host provisioning")
-	dcf    = flag.String("dc", "", "slug of region/ data centre")
+	dcf    = flag.String("dc", "", "slug of region/ metro/ data centre")
 	slugf  = flag.String("slug", "", "slug of machine/ plan")
 	osf    = flag.String("os", "", "os type")
 	pnamef = flag.String("project", "bench", "project name")
@@ -27,12 +27,12 @@ var (
 	filesf = flag.String("files", "", "comma-separated list of file names to replace ${KEY} strings in install")
 )
 
-type stdPrices map[string]float64 // machine[standard hourly price in USD]
+type stdPrices map[string]float32 // machine[standard hourly price in USD]
 
-type dcMachinePrices map[string]map[string]float64 //region[machine[price (positive for spot, negative for standard)]]
+type dcMachinePrices map[string]map[string]float32 //region[machine[price (positive for spot, negative for standard)]]
 
 type client interface {
-	Provision(host, install, dc, plan string, price float64, spot bool) error
+	Provision(host, install, dc, plan string, price float32, spot bool) error
 	Delete(host string) error
 	// Informational
 	Facilities() ([][2]string, error)
@@ -88,7 +88,7 @@ func main() {
 	}
 	// arbitrage
 	host := strings.Replace(*hnamef, "RAND", crock32.PUID(), -1)
-	dc, machine, pri, spot, err := arbitrage(c, std, *maxf)
+	dc, machine, pri, spot, err := arbitrage(c, std, float32(*maxf))
 	if err != nil {
 		log.Fatal(err)
 	}

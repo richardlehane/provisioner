@@ -32,7 +32,7 @@ func filterPlans(mp dcMachinePrices, plans []string) dcMachinePrices {
 				continue
 			}
 			if _, ok := ret[reg]; !ok {
-				ret[reg] = make(map[string]float64)
+				ret[reg] = make(map[string]float32)
 			}
 			ret[reg][plan] = m[plan]
 		}
@@ -40,7 +40,7 @@ func filterPlans(mp dcMachinePrices, plans []string) dcMachinePrices {
 	return ret
 }
 
-func arbitrage(c client, std stdPrices, max float64) (region string, plan string, price float64, spot bool, err error) {
+func arbitrage(c client, std stdPrices, max float32) (region string, plan string, price float32, spot bool, err error) {
 	// if max is 0 we expect a slug arg and return prices and region for that
 	if max == 0 {
 		if pri, ok := std[*slugf]; ok {
@@ -56,7 +56,7 @@ func arbitrage(c client, std stdPrices, max float64) (region string, plan string
 			case *cherryClient:
 				region = cherryDC
 			case *equinixClient:
-				region = equinixDC
+				region = equinixMetro
 			}
 			return
 		}
@@ -78,10 +78,10 @@ func arbitrage(c client, std stdPrices, max float64) (region string, plan string
 	}
 	// if max negative, go for cheapest
 	if max < 0 {
-		var curr float64
+		var curr float32
 		for reg, m := range pri {
 			for pla, p := range m {
-				n := math.Abs(p)
+				n := float32(math.Abs(float64(p)))
 				if (n <= max && curr == 0) || n < curr {
 					region = reg
 					plan = pla
@@ -97,11 +97,11 @@ func arbitrage(c client, std stdPrices, max float64) (region string, plan string
 		return
 	}
 	// if max postive, go for best value
-	var val float64
-	var curr float64
+	var val float32
+	var curr float32
 	for reg, m := range pri {
 		for pla, p := range m {
-			n := math.Abs(p)
+			n := float32(math.Abs(float64(p)))
 			val = std[pla] - n
 			if (n <= max && curr == 0) || (n <= max && val > curr) {
 				region = reg
