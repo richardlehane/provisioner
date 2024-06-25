@@ -5,6 +5,7 @@ packages:
   - python3-pip
   - pipx
   - openjdk-11-jre
+  - graphviz
 write_files:
   - content: | 
       [Unit]
