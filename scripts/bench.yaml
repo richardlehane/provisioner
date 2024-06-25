@@ -20,6 +20,7 @@ write_files:
       Environment="RUNNER_AUTH=${RUNNER_AUTH}"
       Environment="RUNNER_URL=https://www.itforarchivists.com/siegfried/jobs/bench"
       Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/go/bin:/root/droid:/root/.local/bin"
+      Environment="HOME=/root"
       ExecStart=/root/go/bin/runner
       ExecStart=/root/go/bin/provisioner -delete -host=${HOST}
            

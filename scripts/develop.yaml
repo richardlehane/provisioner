@@ -18,6 +18,7 @@ write_files:
       Environment="RUNNER_AUTH=${RUNNER_AUTH}"
       Environment="RUNNER_URL=https://www.itforarchivists.com/siegfried/jobs/develop"
       Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin:/root/go/bin"
+      Environment="HOME=/root"
       ExecStart=/root/go/bin/runner
       ExecStart=/root/go/bin/provisioner -delete -host=${HOST}
            
