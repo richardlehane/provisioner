@@ -51,12 +51,12 @@ runcmd:
   - "pipx ensure path"
   - "mkdir /tmp/droid"
   - "mkdir /root/droid"
-  - "wget -P /tmp/droid https://github.com/digital-preservation/droid/releases/download/droid-6.7.0/droid-binary-6.7.0-bin.zip"
-  - "unzip /tmp/droid/droid-binary-6.7.0-bin.zip -d /root/droid"
+  - "wget -P /tmp/droid https://github.com/digital-preservation/droid/releases/download/droid-6.8.0/droid-binary-6.8.0-bin.zip"
+  - "unzip /tmp/droid/droid-binary-6.8.0-bin.zip -d /root/droid"
   - "mv /root/droid/droid.sh /root/droid/droid"
   - "chmod +x /root/droid/droid"
-  - "chmod +x /root/droid/droid-ui-6.7.0.jar"
-  - "chmod +x /root/droid/droid-command-line-6.7.0.jar"
+  - "chmod +x /root/droid/droid-ui-6.8.0.jar"
+  - "chmod +x /root/droid/droid-command-line-6.8.0.jar"
   - "/root/droid/droid -d"
   - [ systemctl, daemon-reload ]
   - [ systemctl, enable, rclone.service ]
